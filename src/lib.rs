@@ -23,10 +23,14 @@ pub mod player;
 pub mod provider;
 pub mod logger;
 pub mod sync;
+pub mod store;
+pub mod error;
 
 pub use provider::{Explorer, Provider};
-pub use library::{SharedLibrary, Track, Artist, Album, Playlist};
+pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist};
 pub use player::SharedPlayer;
+pub use store::LibraryStore;
+pub use error::RusticError;
 
 use std::sync::Arc;
 
