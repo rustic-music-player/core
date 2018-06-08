@@ -1,18 +1,18 @@
 mod episode;
 mod podcast;
-mod user;
 
 use provider;
 use library::{Track, SharedLibrary, Album, Artist};
 use rayon::prelude::*;
-
-pub use self::podcast::PocketcastPodcast;
-pub use self::episode::PocketcastEpisode;
-pub use self::user::PocketcastUser;
+use pocketcasts::{Podcast, PocketcastClient};
+use failure::Error;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct PocketcastsProvider {
-    user: user::PocketcastUser
+    email: String,
+    password: String,
+    #[serde(skip)]
+    client: Option<PocketcastClient>
 }
 
 impl provider::ProviderInstance for PocketcastsProvider {
@@ -20,16 +20,25 @@ impl provider::ProviderInstance for PocketcastsProvider {
         "Pocketcasts"
     }
 
+    fn setup(&mut self) -> Result<(), Error> {
+        let mut client = PocketcastClient::new(self.email.clone(), self.password.clone());
+        client.login()?;
+        self.client = Some(client);
+
+        Ok(())
+    }
+
     fn uri_scheme(&self) -> &'static str { "pocketcasts" }
 
-    fn sync(&mut self, library: SharedLibrary) -> Result<provider::SyncResult, provider::SyncError> {
-        let podcasts = self.user.get_subscriptions();
+    fn sync(&mut self, library: SharedLibrary) -> Result<provider::SyncResult, Error> {
+        let client = self.client.clone().unwrap();
+        let podcasts = client.get_subscriptions()?;
         let albums = podcasts.len();
         let mut episodes: Vec<Track> = podcasts
             .par_iter()
             .cloned()
             .map(|podcast| {
-                let episodes = podcast.get_episodes(&self.user).unwrap();
+                let episodes = client.get_episodes(&podcast).unwrap();
                 (podcast, episodes)
             })
             .map(|(podcast, episodes)| {
@@ -77,21 +86,25 @@ impl provider::ProviderInstance for PocketcastsProvider {
         }
     }
 
-    fn navigate(&self, path: Vec<String>) -> Result<provider::ProviderFolder, provider::NavigationError> {
+    fn navigate(&self, path: Vec<String>) -> Result<provider::ProviderFolder, Error> {
+        let client = self.client.clone().unwrap();
         let podcasts = match path[0].as_str() {
-            "Subscriptions" => Ok(self.user.get_subscriptions()),
-            "Top Charts" => Ok(self.user.get_top_charts()),
-            "Featured" => Ok(self.user.get_featured()),
-            "Trending" => Ok(self.user.get_trending()),
-            _ => Err(provider::NavigationError::PathNotFound)
-        };
+            "Subscriptions" => Ok(self.client.clone().unwrap().get_subscriptions()),
+            "Top Charts" => Ok(PocketcastClient::get_top_charts()),
+            "Featured" => Ok(PocketcastClient::get_featured()),
+            "Trending" => Ok(PocketcastClient::get_trending()),
+            _ => Err(Error::from(provider::NavigationError::PathNotFound))
+        }?;
         match path.len() {
             1 => podcasts.map(provider::ProviderFolder::from),
             2 => podcasts.and_then(|podcasts| {
                 podcasts
                     .iter()
                     .find(|podcast| podcast.title == path[1])
-                    .and_then(|podcast| podcast.get_episodes(&self.user))
+                    .ok_or(provider::NavigationError::PathNotFound)
+                    .map_err(Error::from)
+                    .and_then(|podcast| client.get_episodes(&podcast)
+                        .map_err(|err| Error::from(provider::NavigationError::FetchError)))
                     .map(|episodes| {
                         episodes
                             .iter()
@@ -100,7 +113,7 @@ impl provider::ProviderInstance for PocketcastsProvider {
                             .map(provider::ProviderItem::from)
                             .collect()
                     })
-                    .ok_or(provider::NavigationError::FetchError)
+                    // .ok_or(Error::from(provider::NavigationError::FetchError))
                     .map(|items| {
                         provider::ProviderFolder {
                             folders: vec![],
@@ -108,7 +121,7 @@ impl provider::ProviderInstance for PocketcastsProvider {
                         }
                     })
             }),
-            _ => Err(provider::NavigationError::PathNotFound)
+            _ => Err(Error::from(provider::NavigationError::PathNotFound))
         }
     }
 
@@ -121,8 +134,8 @@ impl provider::ProviderInstance for PocketcastsProvider {
     }
 }
 
-impl From<Vec<PocketcastPodcast>> for provider::ProviderFolder {
-    fn from(podcasts: Vec<PocketcastPodcast>) -> provider::ProviderFolder {
+impl From<Vec<Podcast>> for provider::ProviderFolder {
+    fn from(podcasts: Vec<Podcast>) -> provider::ProviderFolder {
         provider::ProviderFolder {
             folders: podcasts
                 .iter()

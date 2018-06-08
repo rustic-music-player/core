@@ -5,6 +5,7 @@ use soundcloud;
 use provider;
 use library::{SharedLibrary, Playlist, Track};
 use std::str::FromStr;
+use failure::Error;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct SoundcloudProvider {
@@ -30,7 +31,11 @@ impl provider::ProviderInstance for SoundcloudProvider {
 
     fn uri_scheme(&self) -> &'static str { "soundcloud" }
 
-    fn sync(&mut self, library: SharedLibrary) -> Result<provider::SyncResult, provider::SyncError> {
+    fn setup(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn sync(&mut self, library: SharedLibrary) -> Result<provider::SyncResult, Error> {
         let client = self.client();
         let mut playlists: Vec<Playlist> = client
             .playlists()?
@@ -53,7 +58,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
             items: vec![]
         }
     }
-    fn navigate(&self, path: Vec<String>) -> Result<provider::ProviderFolder, provider::NavigationError> {
+    fn navigate(&self, path: Vec<String>) -> Result<provider::ProviderFolder, Error> {
         match path[0].as_str() {
             "Likes" => {
                 let client = self.client();
@@ -79,7 +84,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
                 };
                 Ok(folder)
             },
-            _ => Err(provider::NavigationError::PathNotFound)
+            _ => Err(Error::from(provider::NavigationError::PathNotFound))
         }
     }
     fn search(&self, query: String) -> Vec<provider::ProviderItem> {

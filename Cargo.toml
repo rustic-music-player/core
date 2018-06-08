@@ -18,6 +18,8 @@ gstreamer = "0.10.0"
 glib = "0.4.0"
 libc = "0.2.34"
 url = "1.7"
+failure = "0.1"
+failure_derive = "0.1"
 
 [dependencies.slog]
 version = "2.1.1"
@@ -25,3 +27,6 @@ features = ["max_level_debug"]
 
 [dependencies.soundcloud]
 git = "https://github.com/maxjoehnk/soundcloud-rs"
+
+[dependencies.pocketcasts]
+git = "https://github.com/maxjoehnk/pocketcasts-rs"

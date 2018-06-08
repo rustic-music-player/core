@@ -1,3 +1,5 @@
+use failure::Error;
+
 mod explorer;
 mod sync_error;
 mod item;
@@ -37,17 +39,20 @@ pub enum Provider {
 }
 
 pub trait ProviderInstance {
+    fn setup(&mut self) -> Result<(), Error>;
     fn title(&self) -> &'static str;
     fn uri_scheme(&self) -> &'static str;
-    fn sync(&mut self, library: SharedLibrary) -> Result<SyncResult, SyncError>;
+    fn sync(&mut self, library: SharedLibrary) -> Result<SyncResult, Error>;
     fn root(&self) -> ProviderFolder;
-    fn navigate(&self, path: Vec<String>) -> Result<ProviderFolder, NavigationError>;
+    fn navigate(&self, path: Vec<String>) -> Result<ProviderFolder, Error>;
     fn search(&self, query: String) -> Vec<ProviderItem>;
     fn resolve_track(&self, uri: &String) -> Option<Track>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Fail)]
 pub enum NavigationError {
+    #[fail(display = "Path not found")]
     PathNotFound,
+    #[fail(display = "can't fetch")]
     FetchError
 }

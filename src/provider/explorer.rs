@@ -1,3 +1,4 @@
+use failure::Error;
 use super::{SharedProviders, ProviderFolder, NavigationError};
 
 pub struct Explorer {
@@ -62,7 +63,7 @@ impl Explorer {
         }
     }
 
-    pub fn items(&self) -> Result<ProviderFolder, NavigationError> {
+    pub fn items(&self) -> Result<ProviderFolder, Error> {
         let root = self.get_root();
         match self.path.len() {
             0 => Ok(root),
@@ -72,7 +73,7 @@ impl Explorer {
                     .iter()
                     .find(|provider| provider.read().unwrap().title() == path);
                 provider
-                    .ok_or(NavigationError::PathNotFound)
+                    .ok_or(Error::from(NavigationError::PathNotFound))
                     .map(|provider| provider.read().unwrap().root())
             },
             _ => {
@@ -82,7 +83,7 @@ impl Explorer {
                     .find(|provider| provider.read().unwrap().title() == path);
                 let path = &self.path[1..];
                 provider
-                    .ok_or(NavigationError::PathNotFound)
+                    .ok_or(Error::from(NavigationError::PathNotFound))
                     .and_then(|provider| provider.read().unwrap().navigate(path.to_vec()))
             }
         }

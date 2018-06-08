@@ -15,7 +15,10 @@ extern crate glib;
 extern crate libc;
 extern crate url;
 extern crate soundcloud;
-extern crate reqwest;
+extern crate pocketcasts;
+extern crate failure;
+#[macro_use]
+extern crate failure_derive;
 
 pub mod bus;
 pub mod library;
