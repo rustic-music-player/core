@@ -20,7 +20,7 @@ impl From<SoundcloudTrack> for Track {
             album_id: None,
             stream_url: track.url.unwrap(),
             provider: provider::Provider::Soundcloud,
-            uri: format!("soundcloud://{}", track.id),
+            uri: format!("soundcloud://track/{}", track.id),
             coverart: track.coverart,
             duration: Some(track.duration)
         }

@@ -9,7 +9,8 @@ impl From<Podcast> for Album {
             title: podcast.title,
             artist_id: None,
             provider: Provider::Pocketcasts,
-            coverart: podcast.thumbnail_url
+            coverart: podcast.thumbnail_url,
+            uri: format!("pocketcasts://podcast/{}", podcast.uuid)
         }
     }
 }
@@ -18,7 +19,8 @@ impl From<Podcast> for Artist {
     fn from(podcast: Podcast) -> Artist {
         Artist {
             id: None,
-            name: podcast.author
+            uri: format!("pocketcasts://interpret/{}", podcast.author),
+            name: podcast.author,
         }
     }
 }

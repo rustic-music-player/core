@@ -44,7 +44,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
             .map(|playlist| playlist::SoundcloudPlaylist::from(playlist, self.client_id.clone()))
             .map(Playlist::from)
             .collect();
-        library.add_playlists(&mut playlists);
+        library.sync_playlists(&mut playlists);
         Ok(provider::SyncResult {
             tracks: 0,
             albums: 0,

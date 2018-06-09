@@ -80,6 +80,15 @@ impl Library {
             .find(|artist| artist.id == Some(*id))
     }
 
+    pub fn get_playlist(&self, id: &usize) -> Option<Playlist> {
+        self.playlists
+            .read()
+            .unwrap()
+            .iter()
+            .cloned()
+            .find(|playlist| playlist.id == Some(*id))
+    }
+
     pub fn add_tracks(&self, tracks: &mut Vec<Track>) {
         let tracks = tracks
             .iter()
@@ -123,9 +132,93 @@ impl Library {
         self.artists.write().unwrap().push(artist.clone());
     }
 
-    pub fn add_playlist(&self, playlist: &mut Playlist) {
-        playlist.id = Some(self.playlist_id.fetch_add(1, Ordering::Relaxed));
-        self.playlists.write().unwrap().push(playlist.clone());
+    pub fn add_playlist(&self, playlist: &Playlist) {
+        let p = Playlist {
+            id: Some(self.playlist_id.fetch_add(1, Ordering::Relaxed)),
+            ..playlist.clone()
+        };
+        self.playlists.write().unwrap().push(p);
+    }
+
+    pub fn add_track(&self, track: &Track) {
+        let t = Track {
+            id: Some(self.track_id.fetch_add(1, Ordering::Relaxed)),
+            ..track.clone()
+        };
+        self.tracks.write().unwrap().push(t);
+    }
+
+    pub fn sync_artist(&self, artist: &mut Artist) {
+        let has_artist = {
+            let artists = self.artists.read().unwrap();
+            artists
+                .iter()
+                .find(|a| a.uri == artist.uri)
+                .map(|a| a.id)
+        };
+
+        let id: usize = has_artist
+            .and_then(|id| id)
+            .unwrap_or_else(|| self.artist_id.fetch_add(1, Ordering::Relaxed));
+        artist.id = Some(id);
+
+        if has_artist.is_none() {
+            self.artists
+                .write()
+                .unwrap()
+                .push(artist.clone());
+        }
+    }
+
+    pub fn sync_album(&self, album: &mut Album) {
+        let has_album = {
+            let albums = self.albums.read().unwrap();
+            albums
+                .iter()
+                .find(|a| a.uri == album.uri)
+                .map(|a| a.id)
+        };
+
+        let id: usize = has_album
+            .and_then(|id| id)
+            .unwrap_or_else(|| self.album_id.fetch_add(1, Ordering::Relaxed));
+        album.id = Some(id);
+
+        if has_album.is_none() {
+            self.albums
+                .write()
+                .unwrap()
+                .push(album.clone());
+        }
+    }
+
+    pub fn sync_tracks(&self, tracks: &mut Vec<Track>) {
+        println!("syncing tracks {}", tracks.len());
+        tracks
+            .iter()
+            .filter(|track| {
+                let tracks = self.tracks.read().unwrap();
+                tracks
+                    .iter()
+                    .find(|t| t.uri == track.uri)
+                    .map(|t| false)
+                    .unwrap_or(true)
+            })
+            .for_each(|t| self.add_track(t))
+    }
+
+    pub fn sync_playlists(&self, playlists: &mut Vec<Playlist>) {
+        playlists
+            .iter()
+            .filter(|playlist| {
+                let playlists = self.playlists.read().unwrap();
+                playlists
+                    .iter()
+                    .find(|p| p.uri == playlist.uri)
+                    .map(|p| false)
+                    .unwrap_or(true)
+            })
+            .for_each(|p| self.add_playlist(p))
     }
 
     pub fn search(&self, query: &'static str) -> Vec<Track> {

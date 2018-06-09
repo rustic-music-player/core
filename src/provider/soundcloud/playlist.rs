@@ -44,7 +44,8 @@ impl From<SoundcloudPlaylist> for Playlist {
                 .map(SoundcloudTrack::from)
                 .map(Track::from)
                 .collect(),
-            provider: provider::Provider::Soundcloud
+            provider: provider::Provider::Soundcloud,
+            uri: format!("soundcloud://playlist/{}", playlist.id)
         }
     }
 }

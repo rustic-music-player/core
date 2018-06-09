@@ -44,9 +44,9 @@ impl provider::ProviderInstance for PocketcastsProvider {
             .map(|(podcast, episodes)| {
                 let mut artist = Artist::from(podcast.clone());
                 let mut album = Album::from(podcast);
-                library.add_artist(&mut artist);
+                library.sync_artist(&mut artist);
                 album.artist_id = artist.id.clone();
-                library.add_album(&mut album);
+                library.sync_album(&mut album);
                 let tracks: Vec<Track> = episodes
                     .iter()
                     .cloned()
@@ -65,7 +65,7 @@ impl provider::ProviderInstance for PocketcastsProvider {
                 a
             });
         let tracks = episodes.len();
-        library.add_tracks(&mut episodes);
+        library.sync_tracks(&mut episodes);
         Ok(provider::SyncResult {
             tracks,
             albums,

@@ -1,4 +1,5 @@
 use provider::Provider;
+use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Track {
@@ -16,5 +17,19 @@ pub struct Track {
 impl PartialEq for Track {
     fn eq(&self, other: &Track) -> bool {
         self.uri == other.uri
+    }
+}
+
+impl Eq for Track {}
+
+impl PartialOrd for Track {
+    fn partial_cmp(&self, other: &Track) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Track {
+    fn cmp(&self, other: &Track) -> Ordering {
+        self.title.cmp(&other.title)
     }
 }
