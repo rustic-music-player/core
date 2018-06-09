@@ -1,5 +1,6 @@
 #[derive(Clone, Debug, Serialize)]
 pub struct Artist {
     pub id: Option<usize>,
-    pub name: String
+    pub name: String,
+    pub uri: String
 }

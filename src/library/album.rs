@@ -6,5 +6,6 @@ pub struct Album {
     pub title: String,
     pub artist_id: Option<usize>,
     pub provider: Provider,
-    pub coverart: Option<String>
+    pub coverart: Option<String>,
+    pub uri: String
 }
