@@ -46,7 +46,7 @@ pub trait ProviderInstance {
     fn root(&self) -> ProviderFolder;
     fn navigate(&self, path: Vec<String>) -> Result<ProviderFolder, Error>;
     fn search(&self, query: String) -> Vec<ProviderItem>;
-    fn resolve_track(&self, uri: &String) -> Option<Track>;
+    fn resolve_track(&self, uri: &str) -> Option<Track>;
 }
 
 #[derive(Debug, Fail)]

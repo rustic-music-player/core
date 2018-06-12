@@ -1,6 +1,6 @@
 use gstreamer as gst;
 use player::Queue;
-use gstreamer::MessageView;
+use gstreamer::{MessageView, StateChangeReturn};
 use std::thread;
 use std::time::Duration;
 use gstreamer::prelude::*;
@@ -8,6 +8,7 @@ use library::Track;
 use logger::logger;
 use bus::{SharedBus, Message};
 use std::sync::{Arc, Mutex};
+use failure::{Error, err_msg};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum PlayerState {
@@ -40,108 +41,100 @@ pub struct Player {
 pub type SharedPlayer = Arc<Mutex<Player>>;
 
 impl Player {
-    pub fn new(bus: SharedBus) -> SharedPlayer {
-        Arc::new(Mutex::new(Player {
+    pub fn new(bus: SharedBus) -> Result<SharedPlayer, Error> {
+        Ok(Arc::new(Mutex::new(Player {
             state: PlayerState::Stop,
             queue: Queue::new(),
-            backend: GstBackend::new(),
+            backend: GstBackend::new()?,
             volume: 100,
             bus
-        }))
+        })))
     }
 
-    pub fn play(&mut self) {
+    pub fn play(&mut self) -> Result<(), Error> {
         match self.state {
             PlayerState::Stop => {
                 let current = self.queue.current();
-                match current {
-                    Some(track) => {
-                        self.state = PlayerState::Play;
-                        self.bus.lock().unwrap().emit(&Message::PlayerState);
-                        self.select_track(&track);
-                    },
-                    None => {}
+                if let Some(track) = current {
+                    self.state = PlayerState::Play;
+                    self.bus.lock().unwrap().emit(&Message::PlayerState);
+                    self.select_track(&track)?;
                 }
+                Ok(())
             },
             PlayerState::Pause => {
                 self.state = PlayerState::Play;
                 self.bus.lock().unwrap().emit(&Message::PlayerState);
-                self.backend.play();
+                self.backend.play()?;
+                Ok(())
             },
-            _ => {}
+            _ => Ok(())
         }
     }
 
-    pub fn pause(&mut self) {
+    pub fn pause(&mut self) -> Result<(), Error> {
         self.state = PlayerState::Pause;
         self.bus.lock().unwrap().emit(&Message::PlayerState);
-        self.backend.pause();
+        self.backend.pause()
     }
 
-    pub fn stop(&mut self) {
+    pub fn stop(&mut self) -> Result<(), Error> {
         self.state = PlayerState::Stop;
         self.bus.lock().unwrap().emit(&Message::PlayerState);
-        self.backend.stop();
+        self.backend.stop()?;
         self.queue.clear();
+        Ok(())
     }
 
-    pub fn prev(&mut self) {
+    pub fn prev(&mut self) -> Result<(), Error> {
         {
-            match self.queue.prev() {
-                None => {
-                    self.state = PlayerState::Stop;
-                    self.bus.lock().unwrap().emit(&Message::PlayerState);
-                    self.backend.stop();
-                },
-                _ => {}
+            if self.queue.prev().is_none() {
+                self.state = PlayerState::Stop;
+                self.bus.lock().unwrap().emit(&Message::PlayerState);
+                self.backend.stop()?;
             }
         }
         if self.state == PlayerState::Play {
-            match self.queue.current() {
-                Some(track) => {
-                    self.select_track(&track);
-                },
-                _ => {}
+            if let Some(track) = self.queue.current() {
+                self.select_track(&track)?;
             }
         }
+        Ok(())
     }
 
-    pub fn next(&mut self) {
+    pub fn next(&mut self) -> Result<(), Error> {
         {
-            match self.queue.next() {
-                None => {
-                    self.state = PlayerState::Stop;
-                    self.bus.lock().unwrap().emit(&Message::PlayerState);
-                },
-                _ => {}
+            if self.queue.next().is_none() {
+                self.state = PlayerState::Stop;
+                self.bus.lock().unwrap().emit(&Message::PlayerState);
+                self.backend.stop()?;
             }
         }
         if self.state == PlayerState::Play {
-            match self.queue.current() {
-                Some(track) => {
-                    self.select_track(&track);
-                },
-                _ => {}
+            if let Some(track) = self.queue.current() {
+                self.select_track(&track)?;
             }
         }
+        Ok(())
     }
 
     pub fn volume(&self) -> u32 {
         self.volume
     }
 
-    pub fn set_volume(&mut self, volume: u32) {
+    pub fn set_volume(&mut self, volume: u32) -> Result<(), Error> {
         self.volume = volume;
-        self.backend.set_volume(volume as f64 / 100.0);
+        self.backend.set_volume(f64::from(volume) / 100.0)?;
         self.bus.lock().unwrap().emit(&Message::Volume);
+        Ok(())
     }
 
     fn get_backend(&self) -> &GstBackend {
         &self.backend
     }
 
-    fn select_track(&self, track: &Track) {
-        self.backend.set_track(track, self.state.clone());
+    fn select_track(&self, track: &Track) -> Result<(), Error> {
+        self.backend.set_track(track, self.state.clone())
     }
 }
 
@@ -154,61 +147,72 @@ struct GstBackend {
 }
 
 impl GstBackend {
-    fn new() -> GstBackend {
+    fn new() -> Result<GstBackend, Error> {
         gst::init().unwrap();
-        let player = GstBackend {
+        let player: GstBackend = GstBackend {
             pipeline: gst::Pipeline::new(None),
-            decoder: gst::ElementFactory::make("uridecodebin", None).expect("uridecodebin"),
-            volume: gst::ElementFactory::make("volume", None).expect("volume"),
-            sink: gst::ElementFactory::make("autoaudiosink", None).expect("autoaudiosink")
+            decoder: gst::ElementFactory::make("uridecodebin", None).ok_or_else(|| err_msg("can't build uridecodebin"))?,
+            volume: gst::ElementFactory::make("volume", None).ok_or_else(|| err_msg("can't build volume"))?,
+            sink: gst::ElementFactory::make("autoaudiosink", None).ok_or_else(|| err_msg("can't build autoaudiosink"))?
         };
 
-        player.pipeline.add(&player.decoder).expect("add decoder to pipeline");
-        player.pipeline.add(&player.volume).expect("add volume to pipeline");
-        player.pipeline.add(&player.sink).expect("add sink to pipeline");
+        player.pipeline.add(&player.decoder)?;
+        player.pipeline.add(&player.volume)?;
+        player.pipeline.add(&player.sink)?;
 
-        player.volume.link(&player.sink);
+        player.volume.link(&player.sink)?;
 
-        let sink_pad = player.volume.get_static_pad("sink").expect("volume sink_pad");
+        let sink_pad = player.volume.get_static_pad("sink").ok_or_else(|| err_msg("missing sink pad on volume element"))?;
         player.decoder.connect_pad_added(move |_el: &gst::Element, pad: &gst::Pad| {
             pad.link(&sink_pad);
         });
 
-        player
+        Ok(player)
     }
 
-    fn get_bus(&self) -> gst::Bus {
-        self.pipeline.get_bus().unwrap()
+    fn get_bus(&self) -> Result<gst::Bus, Error> {
+        self.pipeline.get_bus().ok_or_else(|| err_msg("missing bus"))
     }
 
-    fn set_track(&self, track: &Track, state: PlayerState) {
+    fn set_track(&self, track: &Track, state: PlayerState) -> Result<(), Error> {
         debug!(logger, "Selecting {:?}", track);
-        self.pipeline.set_state(gst::State::Null);
+        if let StateChangeReturn::Failure = self.pipeline.set_state(gst::State::Null) {
+            bail!("can't stop pipeline")
+        }
         self.decoder.set_property_from_str("uri", track.stream_url.as_str());
 
-        let ret = self.pipeline.set_state(state.into());
-
-        assert_ne!(ret, gst::StateChangeReturn::Failure);
-    }
-
-    fn set_volume(&self, volume: f64) {
-        debug!(logger, "set volume {}", volume);
-        match self.volume.set_property("volume", &volume) {
-            Err(err) => error!(logger, "Can't set Volume {:?}", err),
-            _ => {},
+        if let StateChangeReturn::Failure = self.pipeline.set_state(state.into()) {
+            bail!("can't restart pipeline")
         }
+
+        Ok(())
     }
 
-    fn play(&self) {
-        self.pipeline.set_state(gst::State::Playing);
+    fn set_volume(&self, volume: f64) -> Result<(), Error> {
+        debug!(logger, "set volume {}", volume);
+        self.volume.set_property("volume", &volume)?;
+        Ok(())
     }
 
-    fn pause(&self) {
-        self.pipeline.set_state(gst::State::Paused);
+    fn play(&self) -> Result<(), Error> {
+        if let StateChangeReturn::Failure = self.pipeline.set_state(gst::State::Playing) {
+            bail!("can't play pipeline")
+        }
+        Ok(())
     }
 
-    fn stop(&self) {
-        self.pipeline.set_state(gst::State::Null);
+    fn pause(&self) -> Result<(), Error> {
+        if let StateChangeReturn::Failure = self.pipeline.set_state(gst::State::Paused) {
+            bail!("can't pause pipeline")
+        }
+        Ok(())
+    }
+
+    fn stop(&self) -> Result<(), Error> {
+        if let StateChangeReturn::Failure = self.pipeline.set_state(gst::State::Null) {
+            bail!("can't stop pipeline")
+        }
+        Ok(())
     }
 }
 
@@ -217,26 +221,26 @@ pub fn main_loop(player: SharedPlayer) -> thread::JoinHandle<()> {
         loop {
             {
                 let mut player = player.lock().unwrap();
-                let bus = player.get_backend().get_bus();
-
-                match bus.pop() {
-                    None => (),
-                    Some(msg) => {
-                        match msg.view() {
-                            MessageView::Eos(..) => player.next(),
-                            MessageView::Error(err) => {
-                                println!(
-                                    "Error from {}: {} ({:?})",
-                                    msg.get_src().unwrap().get_path_string(),
-                                    err.get_error(),
-                                    err.get_debug()
-                                );
-                                break;
-                            },
-                            _ => (),
-                        }
-                    },
-                };
+                if let Ok(bus) = player.get_backend().get_bus() {
+                    match bus.pop() {
+                        None => Ok(()),
+                        Some(msg) => {
+                            match msg.view() {
+                                MessageView::Eos(..) => player.next(),
+                                MessageView::Error(err) => {
+                                    println!(
+                                        "Error from {}: {} ({:?})",
+                                        msg.get_src().unwrap().get_path_string(),
+                                        err.get_error(),
+                                        err.get_debug()
+                                    );
+                                    break;
+                                },
+                                _ => Ok(()),
+                            }
+                        },
+                    }.unwrap()
+                }
             }
             thread::sleep(Duration::from_millis(100));
         }

@@ -1,6 +1,6 @@
 use library::Track;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Queue {
     pub tracks: Vec<Track>,
     current: Option<i64>
@@ -9,8 +9,8 @@ pub struct Queue {
 impl Queue {
     pub fn new() -> Queue {
         Queue {
-            tracks: vec![],
-            current: Some(0)
+            current: Some(0),
+            ..Queue::default()
         }
     }
 
@@ -18,7 +18,7 @@ impl Queue {
         self.tracks.push(track);
     }
 
-    pub fn add_multiple(&mut self, tracks: Vec<Track>) {
+    pub fn add_multiple(&mut self, tracks: &[Track]) {
         self.tracks.append(&mut tracks.to_vec());
     }
 

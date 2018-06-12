@@ -11,7 +11,7 @@ pub struct SoundcloudPlaylist {
 }
 
 impl SoundcloudPlaylist {
-    pub fn from(playlist: soundcloud::Playlist, client_id: String) -> SoundcloudPlaylist {
+    pub fn from(playlist: soundcloud::Playlist, client_id: &str) -> SoundcloudPlaylist {
         SoundcloudPlaylist {
             id: playlist.id,
             title: playlist.title,

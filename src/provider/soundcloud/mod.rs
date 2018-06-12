@@ -41,7 +41,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
             .playlists()?
             .iter()
             .cloned()
-            .map(|playlist| playlist::SoundcloudPlaylist::from(playlist, self.client_id.clone()))
+            .map(|playlist| playlist::SoundcloudPlaylist::from(playlist, &self.client_id))
             .map(Playlist::from)
             .collect();
         library.sync_playlists(&mut playlists);
@@ -74,7 +74,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
                                 track::SoundcloudTrack::from(track))),
                         (_, Some(playlist)) => provider::ProviderItem::from(
                             Playlist::from(
-                                playlist::SoundcloudPlaylist::from(playlist, self.client_id.clone()))),
+                                playlist::SoundcloudPlaylist::from(playlist, &self.client_id))),
                         _ => provider::ProviderItem::empty()
                     })
                     .collect();
@@ -100,7 +100,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
             .map(|track| track.into())
             .collect()
     }
-    fn resolve_track(&self, uri: &String) -> Option<Track> {
+    fn resolve_track(&self, uri: &str) -> Option<Track> {
         let id = &uri["soundcloud://".len()..];
         usize::from_str(id).ok()
             .and_then(|id| {

@@ -45,15 +45,15 @@ impl provider::ProviderInstance for PocketcastsProvider {
                 let mut artist = Artist::from(podcast.clone());
                 let mut album = Album::from(podcast);
                 library.sync_artist(&mut artist);
-                album.artist_id = artist.id.clone();
+                album.artist_id = artist.id;
                 library.sync_album(&mut album);
                 let tracks: Vec<Track> = episodes
                     .iter()
                     .cloned()
                     .map(Track::from)
                     .map(|mut track| {
-                        track.album_id = album.id.clone();
-                        track.artist_id = artist.id.clone();
+                        track.album_id = album.id;
+                        track.artist_id = artist.id;
                         track.image_url = album.image_url.clone();
                         track
                     })
@@ -104,7 +104,7 @@ impl provider::ProviderInstance for PocketcastsProvider {
                     .ok_or(provider::NavigationError::PathNotFound)
                     .map_err(Error::from)
                     .and_then(|podcast| client.get_episodes(&podcast)
-                        .map_err(|err| Error::from(provider::NavigationError::FetchError)))
+                        .map_err(|_err| Error::from(provider::NavigationError::FetchError)))
                     .map(|episodes| {
                         episodes
                             .iter()
@@ -129,7 +129,7 @@ impl provider::ProviderInstance for PocketcastsProvider {
         vec![]
     }
 
-    fn resolve_track(&self, _uri: &String) -> Option<Track> {
+    fn resolve_track(&self, _uri: &str) -> Option<Track> {
         None
     }
 }

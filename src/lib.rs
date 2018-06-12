@@ -16,6 +16,7 @@ extern crate libc;
 extern crate url;
 extern crate soundcloud;
 extern crate pocketcasts;
+#[macro_use]
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
@@ -40,8 +41,6 @@ pub use store::LibraryStore;
 pub use error::RusticError;
 
 use std::sync::Arc;
-use std::collections::HashMap;
-use std::sync::RwLock;
 
 pub struct Rustic {
     pub bus: bus::SharedBus,
@@ -52,14 +51,14 @@ pub struct Rustic {
 }
 
 impl Rustic {
-    pub fn new(providers: provider::SharedProviders) -> Arc<Rustic> {
+    pub fn new(providers: provider::SharedProviders) -> Result<Arc<Rustic>, failure::Error> {
         let bus = bus::MessageBus::new();
-        Arc::new(Rustic {
-            player: player::Player::new(Arc::clone(&bus)),
+        Ok(Arc::new(Rustic {
+            player: player::Player::new(Arc::clone(&bus))?,
             library: library::Library::new(),
             providers,
             bus,
             cache: Arc::new(cache::Cache::new())
-        })
+        }))
     }
 }

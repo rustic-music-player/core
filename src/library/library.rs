@@ -36,7 +36,7 @@ impl Library {
         })
     }
 
-    pub fn resolve_track(&self, providers: SharedProviders, uri: &String) -> Option<Track> {
+    pub fn resolve_track(&self, providers: &SharedProviders, uri: &String) -> Option<Track> {
         self.tracks
             .read()
             .unwrap()
@@ -200,7 +200,7 @@ impl Library {
                 tracks
                     .iter()
                     .find(|t| t.uri == track.uri)
-                    .map(|t| false)
+                    .map(|_t| false)
                     .unwrap_or(true)
             })
             .for_each(|t| self.add_track(t))
@@ -214,7 +214,7 @@ impl Library {
                 playlists
                     .iter()
                     .find(|p| p.uri == playlist.uri)
-                    .map(|p| false)
+                    .map(|_p| false)
                     .unwrap_or(true)
             })
             .for_each(|p| self.add_playlist(p))

@@ -1,6 +1,5 @@
 use std::fs::{create_dir_all, OpenOptions};
 use std::sync::{Arc, RwLock};
-use std::io;
 use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
@@ -14,12 +13,7 @@ use image;
 use Rustic;
 
 const THUMBNAIL_SIZE: u32 = 512;
-
-#[derive(Debug)]
-struct CoverartEntry {
-    dl_url: String,
-    uri: String
-}
+const SERVICE_INTERVAL: u64 = 30;
 
 #[derive(Debug)]
 struct CachedEntry {
@@ -27,6 +21,7 @@ struct CachedEntry {
     filename: String
 }
 
+#[derive(Debug, Default)]
 pub struct Cache {
     pub coverart: Arc<RwLock<HashMap<String, String>>>
 }
@@ -50,7 +45,7 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
                     !map.contains_key(&track.uri)
                 })
                 .map(|track| track.image_url.clone().unwrap())
-                .map(|uri| cache_coverart(uri))
+                .map(cache_coverart)
                 .collect();
 
             match result {
@@ -64,7 +59,7 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
                 Err(e) => error!(logger, "[CACHE] Error: {:?}", e)
             }
 
-            thread::sleep(Duration::new(60, 0));
+            thread::sleep(Duration::new(SERVICE_INTERVAL, 0));
         }
     });
     Ok(handle)
@@ -102,9 +97,7 @@ fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
 
 impl Cache {
     pub fn new() -> Cache {
-        Cache {
-            coverart: Arc::new(RwLock::new(HashMap::new()))
-        }
+        Cache::default()
     }
 
     pub fn fetch_coverart(&self, uri: String) -> Result<String, Error> {

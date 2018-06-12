@@ -14,9 +14,9 @@ impl Explorer {
         }
     }
 
-    pub fn navigate_absolute(&mut self, path: String) {
+    pub fn navigate_absolute<'a>(&mut self, path: &'a str) {
         let mut absolute = vec![];
-        let mut current = path.as_str();
+        let mut current = path;
         while !current.is_empty() {
             let layer = match current.find('/') {
                 Some(index) => {
@@ -25,7 +25,7 @@ impl Explorer {
                     layer
                 },
                 None => {
-                    let copy = current.clone();
+                    let copy = current;
                     current = "";
                     copy
                 }
@@ -73,7 +73,7 @@ impl Explorer {
                     .iter()
                     .find(|provider| provider.read().unwrap().title() == path);
                 provider
-                    .ok_or(Error::from(NavigationError::PathNotFound))
+                    .ok_or_else(|| Error::from(NavigationError::PathNotFound))
                     .map(|provider| provider.read().unwrap().root())
             },
             _ => {
@@ -83,7 +83,7 @@ impl Explorer {
                     .find(|provider| provider.read().unwrap().title() == path);
                 let path = &self.path[1..];
                 provider
-                    .ok_or(Error::from(NavigationError::PathNotFound))
+                    .ok_or_else(|| Error::from(NavigationError::PathNotFound))
                     .and_then(|provider| provider.read().unwrap().navigate(path.to_vec()))
             }
         }
