@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
 use std::fmt;
-use logger::logger;
 
 pub type SharedBus = Arc<Mutex<MessageBus>>;
 
@@ -26,7 +25,7 @@ impl MessageBus {
     }
 
     pub fn emit(&self, msg: &Message) {
-        debug!(logger, "Emitting {:?}", msg);
+        debug!("Emitting {:?}", msg);
         for subscription in &self.subscriptions {
             subscription(msg.clone());
         }

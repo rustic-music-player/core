@@ -5,7 +5,6 @@ use std::thread;
 use std::time::Duration;
 use gstreamer::prelude::*;
 use library::Track;
-use logger::logger;
 use bus::{SharedBus, Message};
 use std::sync::{Arc, Mutex};
 use failure::{Error, err_msg};
@@ -175,7 +174,7 @@ impl GstBackend {
     }
 
     fn set_track(&self, track: &Track, state: PlayerState) -> Result<(), Error> {
-        debug!(logger, "Selecting {:?}", track);
+        debug!("Selecting {:?}", track);
         if let StateChangeReturn::Failure = self.pipeline.set_state(gst::State::Null) {
             bail!("can't stop pipeline")
         }
@@ -189,7 +188,7 @@ impl GstBackend {
     }
 
     fn set_volume(&self, volume: f64) -> Result<(), Error> {
-        debug!(logger, "set volume {}", volume);
+        debug!("set volume {}", volume);
         self.volume.set_property("volume", &volume)?;
         Ok(())
     }

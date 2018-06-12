@@ -1,9 +1,5 @@
 #[macro_use]
-extern crate slog;
-extern crate slog_term;
-extern crate slog_async;
-#[macro_use]
-extern crate lazy_static;
+extern crate log;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -29,7 +25,6 @@ pub mod bus;
 pub mod library;
 pub mod player;
 pub mod provider;
-pub mod logger;
 pub mod sync;
 pub mod store;
 pub mod error;

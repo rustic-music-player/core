@@ -6,7 +6,6 @@ use std::time::Duration;
 use std::collections::HashMap;
 use std::path::Path;
 use failure::Error;
-use logger::logger;
 use md5;
 use reqwest::get;
 use image;
@@ -33,7 +32,7 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
 
     let handle = thread::spawn(move || {
         loop {
-            info!(logger, "[CACHE] Caching Coverart...");
+            info!("Caching Coverart...");
             let result: Result<Vec<CachedEntry>, Error> = app.library
                 .tracks
                 .read()
@@ -50,13 +49,13 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
 
             match result {
                 Ok(entries) => {
-                    info!(logger, "[CACHE] Cached {} images", entries.len());
+                    info!("Cached {} images", entries.len());
                     let mut map = app.cache.coverart.write().unwrap();
                     for entry in entries {
                         map.insert(entry.uri, entry.filename);
                     }
                 },
-                Err(e) => error!(logger, "[CACHE] Error: {:?}", e)
+                Err(e) => error!("Error: {:?}", e)
             }
 
             thread::sleep(Duration::new(SERVICE_INTERVAL, 0));
@@ -77,7 +76,7 @@ fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
         });
     }
 
-    debug!(logger, "[CACHE] {} -> {}", &uri, &filename);
+    debug!("{} -> {}", &uri, &filename);
 
     let buffer = {
         let mut buffer = Vec::new();
