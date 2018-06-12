@@ -9,7 +9,7 @@ impl From<Podcast> for Album {
             title: podcast.title,
             artist_id: None,
             provider: Provider::Pocketcasts,
-            coverart: podcast.thumbnail_url,
+            image_url: podcast.thumbnail_url,
             uri: format!("pocketcasts://podcast/{}", podcast.uuid)
         }
     }

@@ -1,5 +1,7 @@
 use provider::Provider;
 use std::cmp::Ordering;
+use std::sync::Arc;
+use Rustic;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Track {
@@ -10,8 +12,16 @@ pub struct Track {
     pub stream_url: String,
     pub provider: Provider,
     pub uri: String,
-    pub coverart: Option<String>,
+    pub image_url: Option<String>,
     pub duration: Option<u64>
+}
+
+impl Track {
+    pub fn coverart(&self, app: &Arc<Rustic>) -> Option<String> {
+        self.image_url
+            .clone()
+            .and_then(|uri| app.cache.fetch_coverart(uri).ok())
+    }
 }
 
 impl PartialEq for Track {

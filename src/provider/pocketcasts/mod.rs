@@ -54,7 +54,7 @@ impl provider::ProviderInstance for PocketcastsProvider {
                     .map(|mut track| {
                         track.album_id = album.id.clone();
                         track.artist_id = artist.id.clone();
-                        track.coverart = album.coverart.clone();
+                        track.image_url = album.image_url.clone();
                         track
                     })
                     .collect();

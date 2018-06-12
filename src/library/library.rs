@@ -193,7 +193,6 @@ impl Library {
     }
 
     pub fn sync_tracks(&self, tracks: &mut Vec<Track>) {
-        println!("syncing tracks {}", tracks.len());
         tracks
             .iter()
             .filter(|track| {

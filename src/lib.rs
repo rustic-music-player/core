@@ -19,7 +19,11 @@ extern crate pocketcasts;
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
+extern crate md5;
+extern crate reqwest;
+extern crate image;
 
+pub mod cache;
 pub mod bus;
 pub mod library;
 pub mod player;
@@ -36,12 +40,15 @@ pub use store::LibraryStore;
 pub use error::RusticError;
 
 use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::RwLock;
 
 pub struct Rustic {
     pub bus: bus::SharedBus,
     pub player: player::SharedPlayer,
     pub library: library::SharedLibrary,
-    pub providers: provider::SharedProviders
+    pub providers: provider::SharedProviders,
+    pub cache: cache::SharedCache
 }
 
 impl Rustic {
@@ -51,7 +58,8 @@ impl Rustic {
             player: player::Player::new(Arc::clone(&bus)),
             library: library::Library::new(),
             providers,
-            bus
+            bus,
+            cache: Arc::new(cache::Cache::new())
         })
     }
 }

@@ -21,7 +21,7 @@ impl From<SoundcloudTrack> for Track {
             stream_url: track.url.unwrap(),
             provider: provider::Provider::Soundcloud,
             uri: format!("soundcloud://track/{}", track.id),
-            coverart: track.coverart,
+            image_url: track.coverart,
             duration: Some(track.duration)
         }
     }
