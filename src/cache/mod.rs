@@ -9,6 +9,7 @@ use failure::Error;
 use md5;
 use reqwest::get;
 use image;
+use image::FilterType;
 use Rustic;
 
 const THUMBNAIL_SIZE: u32 = 512;
@@ -65,11 +66,13 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
 }
 
 fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
+    trace!("cache_coverart (uri: {})", &uri);
     let base = ".cache/coverart";
     let hash = md5::compute(&uri);
     let filename = format!("{:x}.png", hash);
     let path = format!("{}/{}", base, filename);
     if Path::new(&path).exists() {
+        trace!("file already exists");
         return Ok(CachedEntry {
             filename,
             uri
@@ -79,13 +82,16 @@ fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
     debug!("{} -> {}", &uri, &filename);
 
     let buffer = {
+        trace!("fetching image");
         let mut buffer = Vec::new();
         let mut res = get(&uri)?;
         res.read_to_end(&mut buffer)?;
         buffer
     };
+    trace!("resizing image");
     let img = image::load_from_memory(&buffer)?;
-    let thumb = img.thumbnail(THUMBNAIL_SIZE, THUMBNAIL_SIZE);
+    let thumb = img.resize_exact(THUMBNAIL_SIZE, THUMBNAIL_SIZE, FilterType::Nearest);
+    trace!("storing image");
     let mut file = OpenOptions::new().create(true).write(true).open(&path)?;
     thumb.write_to(&mut file, image::ImageFormat::PNG)?;
     Ok(CachedEntry {
@@ -100,12 +106,14 @@ impl Cache {
     }
 
     pub fn fetch_coverart(&self, uri: String) -> Result<String, Error> {
+        trace!("fetch_coverart (uri: {})", &uri);
         {
             let map = self.coverart.read().unwrap();
             if map.contains_key(&uri) {
                 return Ok(format!("/cache/coverart/{}", map.get(&uri).unwrap()));
             }
         }
+        trace!("coverart not cached yet");
         let entry = cache_coverart(uri)?;
         {
             let mut map = self.coverart.write().unwrap();
