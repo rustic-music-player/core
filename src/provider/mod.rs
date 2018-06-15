@@ -8,6 +8,7 @@ mod folder;
 // TODO: move provider into own packages
 mod pocketcasts;
 mod soundcloud;
+mod spotify;
 
 pub use self::item::{ProviderItem, ProviderItemType};
 pub use self::folder::ProviderFolder;
@@ -16,6 +17,7 @@ pub use self::explorer::Explorer;
 
 pub use self::pocketcasts::PocketcastsProvider;
 pub use self::soundcloud::SoundcloudProvider;
+pub use self::spotify::SpotifyProvider;
 
 use std::sync::{Arc, RwLock};
 use std::fmt::Debug;

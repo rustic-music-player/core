@@ -20,6 +20,7 @@ failure = "0.1"
 failure_derive = "0.1"
 md5 = "0.3.7"
 image = "0.19"
+#rspotify = "0.2"
 
 [dependencies.slog]
 version = "2.1.1"
@@ -30,3 +31,7 @@ git = "https://github.com/maxjoehnk/soundcloud-rs"
 
 [dependencies.pocketcasts]
 git = "https://github.com/maxjoehnk/pocketcasts-rs"
+
+[dependencies.rspotify]
+git = "https://github.com/maxjoehnk/rspotify"
+branch = "feature/debug-client"

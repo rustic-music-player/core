@@ -19,6 +19,7 @@ extern crate failure_derive;
 extern crate md5;
 extern crate reqwest;
 extern crate image;
+extern crate rspotify;
 
 pub mod cache;
 pub mod bus;
