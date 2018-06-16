@@ -130,12 +130,12 @@ impl provider::ProviderInstance for PocketcastsProvider {
         }
     }
 
-    fn search(&self, _query: String) -> Vec<provider::ProviderItem> {
-        vec![]
+    fn search(&self, _query: String) -> Result<Vec<provider::ProviderItem>, Error> {
+        Ok(vec![])
     }
 
-    fn resolve_track(&self, _uri: &str) -> Option<Track> {
-        None
+    fn resolve_track(&self, _uri: &str) -> Result<Option<Track>, Error> {
+        Ok(None)
     }
 }
 

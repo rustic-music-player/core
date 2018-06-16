@@ -21,6 +21,7 @@ impl From<Podcast> for Artist {
             id: None,
             uri: format!("pocketcasts://interpret/{}", podcast.author),
             name: podcast.author,
+            image_url: None
         }
     }
 }

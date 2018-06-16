@@ -1,6 +1,12 @@
 use provider;
 use library::{Track, SharedLibrary, Album, Artist};
 use failure::{Error, err_msg};
+use rspotify::spotify::model::{
+    image::Image,
+    album::{FullAlbum, SimplifiedAlbum},
+    artist::{FullArtist, SimplifiedArtist},
+    track::{FullTrack, SimplifiedTrack}
+};
 use rspotify::spotify::client::Spotify;
 use rspotify::spotify::util::get_token;
 use rspotify::spotify::oauth2::{SpotifyClientCredentials, SpotifyOAuth};
@@ -54,9 +60,15 @@ impl provider::ProviderInstance for SpotifyProvider {
     fn sync(&mut self, library: SharedLibrary) -> Result<provider::SyncResult, Error> {
         let spotify = self.client.clone().unwrap();
 
-        let page = spotify.current_user_saved_albums(None, None)?;
+        let albums = spotify.current_user_saved_albums(None, None)?.items;
 
-        debug!("{:?}", page);
+        debug!("{:?}", albums);
+
+        let albums = albums
+            .into_iter()
+            .map(|album| album.album)
+            .map(Album::from);
+
 
         Ok(provider::SyncResult {
             tracks: 0,
@@ -77,11 +89,116 @@ impl provider::ProviderInstance for SpotifyProvider {
         Ok(self.root())
     }
 
-    fn search(&self, _query: String) -> Vec<provider::ProviderItem> {
-        vec![]
+    fn search(&self, query: String) -> Result<Vec<provider::ProviderItem>, Error> {
+        trace!("search {}", query);
+        let spotify = self.client.clone().unwrap();
+
+        let albums = spotify.search_album(&query, None, None, None)?;
+        let artists = spotify.search_artist(&query, None, None, None)?;
+        let tracks = spotify.search_track(&query, None, None, None)?;
+        // let albums = spotify.search_album(&query, None, None, None)?;
+
+        let albums = albums.albums.items
+            .into_iter()
+            .map(Album::from)
+            .map(provider::ProviderItem::from);
+        let artists = artists.artists.items
+            .into_iter()
+            .map(Artist::from)
+            .map(provider::ProviderItem::from);
+        let tracks = tracks.tracks.items
+            .into_iter()
+            .map(Track::from)
+            .map(provider::ProviderItem::from);
+
+        Ok(albums.chain(artists).chain(tracks).collect())
     }
 
-    fn resolve_track(&self, _uri: &str) -> Option<Track> {
-        None
+    fn resolve_track(&self, _uri: &str) -> Result<Option<Track>, Error> {
+        Ok(None)
+    }
+}
+
+fn convert_images(images: &Vec<Image>) -> Option<String> {
+    images.first().map(|image| image.url.clone())
+}
+
+impl From<FullAlbum> for Album {
+    fn from(album: FullAlbum) -> Self {
+        Album {
+            id: None,
+            title: album.name,
+            artist_id: None,
+            provider: provider::Provider::Spotify,
+            image_url: convert_images(&album.images),
+            uri: format!("spotify://album/{}", album.id)
+        }
+    }
+}
+
+impl From<SimplifiedAlbum> for Album {
+    fn from(album: SimplifiedAlbum) -> Self {
+        Album {
+            id: None,
+            title: album.name,
+            artist_id: None,
+            provider: provider::Provider::Spotify,
+            image_url: convert_images(&album.images),
+            uri: format!("spotify://album/{}", album.id)
+        }
+    }
+}
+
+impl From<FullArtist> for Artist {
+    fn from(artist: FullArtist) -> Self {
+        Artist {
+            id: None,
+            name: artist.name,
+            image_url: convert_images(&artist.images),
+            uri: format!("spotify://artist/{}", artist.id)
+        }
+    }
+}
+
+impl From<SimplifiedArtist> for Artist {
+    fn from(artist: SimplifiedArtist) -> Self {
+        Artist {
+            id: None,
+            name: artist.name,
+            image_url: None,
+            uri: format!("spotify://artist/{}", artist.id)
+        }
+    }
+}
+
+impl From<FullTrack> for Track {
+    fn from(track: FullTrack) -> Self {
+        Track {
+            id: None,
+            title: track.name,
+            artist_id: None,
+            album_id: None,
+            stream_url: String::new(),
+            provider: provider::Provider::Spotify,
+            image_url: convert_images(&track.album.images),
+            uri: format!("spotify://track/{}", track.id),
+            duration: Some(track.duration_ms as u64)
+        }
+    }
+}
+
+impl From<SimplifiedTrack> for Track {
+    fn from(track: SimplifiedTrack) -> Self {
+        Track {
+            id: None,
+            title: track.name,
+            artist_id: None,
+            album_id: None,
+            stream_url: String::new(),
+            provider: provider::Provider::Spotify,
+            image_url: None,
+            uri: format!("spotify://track/{}", track.id),
+            duration: Some(track.duration_ms as u64)
+        }
     }
 }

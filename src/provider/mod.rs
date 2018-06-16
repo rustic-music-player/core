@@ -49,8 +49,8 @@ pub trait ProviderInstance: Debug {
     fn sync(&mut self, library: SharedLibrary) -> Result<SyncResult, Error>;
     fn root(&self) -> ProviderFolder;
     fn navigate(&self, path: Vec<String>) -> Result<ProviderFolder, Error>;
-    fn search(&self, query: String) -> Vec<ProviderItem>;
-    fn resolve_track(&self, uri: &str) -> Option<Track>;
+    fn search(&self, query: String) -> Result<Vec<ProviderItem>, Error>;
+    fn resolve_track(&self, uri: &str) -> Result<Option<Track>, Error>;
 }
 
 #[derive(Debug, Fail)]

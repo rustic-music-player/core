@@ -3,6 +3,7 @@ use provider::SharedProviders;
 use std::sync::{RwLock, Arc};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use url::Url;
+use failure::Error;
 
 #[derive(Debug, Serialize)]
 pub struct Library {
@@ -36,21 +37,28 @@ impl Library {
         })
     }
 
-    pub fn resolve_track(&self, providers: &SharedProviders, uri: &String) -> Option<Track> {
-        self.tracks
+    pub fn resolve_track(&self, providers: &SharedProviders, uri: &String) -> Result<Option<Track>, Error> {
+        let track = self.tracks
             .read()
             .unwrap()
             .iter()
             .cloned()
-            .find(|track| &track.uri == uri)
-            .or_else(|| {
-                Url::parse(uri)
-                    .ok()
-                    .and_then(|uri| providers
-                        .iter()
-                        .find(|provider| provider.read().unwrap().uri_scheme() == uri.scheme()))
-                    .and_then(|provider| provider.read().unwrap().resolve_track(uri))
-            })
+            .find(|track| &track.uri == uri);
+
+        match track {
+            Some(track) => Ok(Some(track)),
+            None => {
+                let url = Url::parse(uri)?;
+                let provider = providers
+                    .iter()
+                    .find(|provider| provider.read().unwrap().uri_scheme() == url.scheme());
+                let track = match provider {
+                    Some(provider) => provider.read().unwrap().resolve_track(uri)?,
+                    _ => None
+                };
+                Ok(track)
+            }
+        }
     }
 
     pub fn get_track(&self, id: &usize) -> Option<Track> {

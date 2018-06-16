@@ -87,26 +87,27 @@ impl provider::ProviderInstance for SoundcloudProvider {
             _ => Err(Error::from(provider::NavigationError::PathNotFound))
         }
     }
-    fn search(&self, query: String) -> Vec<provider::ProviderItem> {
+    fn search(&self, query: String) -> Result<Vec<provider::ProviderItem>, Error> {
         trace!("search {}", query);
         let client = self.client();
-        client.tracks()
+        let results = client.tracks()
             .query(Some(query))
-            .get()
-            .unwrap()
+            .get()?
             .unwrap_or_else(|| vec![])
             .into_iter()
             .filter(|track| track.stream_url.is_some())
             .map(|track| track.into())
-            .collect()
+            .collect();
+        Ok(results)
     }
-    fn resolve_track(&self, uri: &str) -> Option<Track> {
+    fn resolve_track(&self, uri: &str) -> Result<Option<Track>, Error> {
         let id = &uri["soundcloud://".len()..];
-        usize::from_str(id).ok()
-            .and_then(|id| {
-                let client = self.client();
-                client.tracks().id(id).get().ok()
-            })
+        let id = usize::from_str(id)?;
+        let client = self.client();
+        let track = client.tracks()
+            .id(id)
+            .get()
+            .ok()
             .map(|mut track| {
                 if track.stream_url.is_some() {
                     track.stream_url = Some(format!("{}?client_id={}", track.stream_url.unwrap(), self.client_id.clone()))
@@ -114,7 +115,8 @@ impl provider::ProviderInstance for SoundcloudProvider {
                 track
             })
             .map(track::SoundcloudTrack::from)
-            .map(Track::from)
+            .map(Track::from);
+        Ok(track)
     }
 }
 
