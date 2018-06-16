@@ -19,3 +19,11 @@ impl Album {
             .and_then(|uri| app.cache.fetch_coverart(uri).ok())
     }
 }
+
+impl PartialEq for Album {
+    fn eq(&self, other: &Album) -> bool {
+        self.uri == other.uri
+    }
+}
+
+impl Eq for Album {}

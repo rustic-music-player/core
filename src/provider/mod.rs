@@ -9,7 +9,7 @@ mod folder;
 mod pocketcasts;
 mod soundcloud;
 
-pub use self::item::ProviderItem;
+pub use self::item::{ProviderItem, ProviderItemType};
 pub use self::folder::ProviderFolder;
 pub use self::sync_error::SyncError;
 pub use self::explorer::Explorer;
@@ -18,6 +18,7 @@ pub use self::pocketcasts::PocketcastsProvider;
 pub use self::soundcloud::SoundcloudProvider;
 
 use std::sync::{Arc, RwLock};
+use std::fmt::Debug;
 use library::{SharedLibrary, Track};
 
 pub type SharedProviders = Vec<Arc<RwLock<Box<ProviderInstance + Send + Sync>>>>;
@@ -30,6 +31,7 @@ pub struct SyncResult {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Provider {
     Pocketcasts,
     Soundcloud,
@@ -38,7 +40,7 @@ pub enum Provider {
     LocalMedia
 }
 
-pub trait ProviderInstance {
+pub trait ProviderInstance: Debug {
     fn setup(&mut self) -> Result<(), Error>;
     fn title(&self) -> &'static str;
     fn uri_scheme(&self) -> &'static str;

@@ -1,22 +1,85 @@
 use library::{Track, Album, Artist, Playlist};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct ProviderItem {
     pub label: String,
-    pub track: Option<Track>,
-    pub album: Option<Album>,
-    pub artist: Option<Artist>,
-    pub playlist: Option<Playlist>
+    pub data: ProviderItemType
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub enum ProviderItemType {
+    Track(Track),
+    Album(Album),
+    Artist(Artist),
+    Playlist(Playlist)
 }
 
 impl ProviderItem {
-    pub fn empty() -> ProviderItem {
-        ProviderItem {
-            label: String::new(),
-            track: None,
-            album: None,
-            artist: None,
-            playlist: None
+    pub fn is_track(&self) -> bool {
+        if let ProviderItemType::Track(_) = self.data {
+            true
+        }else {
+            false
+        }
+    }
+
+    pub fn is_album(&self) -> bool {
+        if let ProviderItemType::Album(_) = self.data {
+            true
+        }else {
+            false
+        }
+    }
+
+    pub fn is_artist(&self) -> bool {
+        if let ProviderItemType::Artist(_) = self.data {
+            true
+        }else {
+            false
+        }
+    }
+
+    pub fn is_playlist(&self) -> bool {
+        if let ProviderItemType::Playlist(_) = self.data {
+            true
+        }else {
+            false
+        }
+    }
+}
+
+impl From<ProviderItem> for Track {
+    fn from(item: ProviderItem) -> Track {
+        match item.data {
+            ProviderItemType::Track(track) => track,
+            _ => panic!("ProviderItem is not of type Track")
+        }
+    }
+}
+
+impl From<ProviderItem> for Artist {
+    fn from(item: ProviderItem) -> Artist {
+        match item.data {
+            ProviderItemType::Artist(artist) => artist,
+            _ => panic!("ProviderItem is not of type Artist")
+        }
+    }
+}
+
+impl From<ProviderItem> for Album {
+    fn from(item: ProviderItem) -> Album {
+        match item.data {
+            ProviderItemType::Album(album) => album,
+            _ => panic!("ProviderItem is not of type Album")
+        }
+    }
+}
+
+impl From<ProviderItem> for Playlist {
+    fn from(item: ProviderItem) -> Playlist {
+        match item.data {
+            ProviderItemType::Playlist(playlist) => playlist,
+            _ => panic!("ProviderItem is not of type Playlist")
         }
     }
 }
@@ -25,10 +88,7 @@ impl From<Track> for ProviderItem {
     fn from(track: Track) -> ProviderItem {
         ProviderItem {
             label: track.title.clone(),
-            track: Some(track),
-            album: None,
-            artist: None,
-            playlist: None
+            data: ProviderItemType::Track(track)
         }
     }
 }
@@ -37,10 +97,7 @@ impl From<Album> for ProviderItem {
     fn from(album: Album) -> ProviderItem {
         ProviderItem {
             label: album.title.clone(),
-            track: None,
-            album: Some(album),
-            artist: None,
-            playlist: None
+            data: ProviderItemType::Album(album)
         }
     }
 }
@@ -49,10 +106,7 @@ impl From<Artist> for ProviderItem {
     fn from(artist: Artist) -> ProviderItem {
         ProviderItem {
             label: artist.name.clone(),
-            track: None,
-            album: None,
-            artist: Some(artist),
-            playlist: None
+            data: ProviderItemType::Artist(artist)
         }
     }
 }
@@ -61,10 +115,7 @@ impl From<Playlist> for ProviderItem {
     fn from(playlist: Playlist) -> ProviderItem {
         ProviderItem {
             label: playlist.title.clone(),
-            track: None,
-            album: None,
-            artist: None,
-            playlist: Some(playlist)
+            data: ProviderItemType::Playlist(playlist)
         }
     }
 }

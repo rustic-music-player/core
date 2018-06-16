@@ -4,7 +4,7 @@ mod podcast;
 use provider;
 use library::{Track, SharedLibrary, Album, Artist};
 use rayon::prelude::*;
-use pocketcasts::{Podcast, PocketcastClient};
+use pocketcasts::{Podcast, Episode, PocketcastClient};
 use failure::Error;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -38,9 +38,14 @@ impl provider::ProviderInstance for PocketcastsProvider {
             .par_iter()
             .cloned()
             .map(|podcast| {
-                let episodes = client.get_episodes(&podcast).unwrap();
-                (podcast, episodes)
+                let episodes = client.get_episodes(&podcast)?;
+                Ok((podcast, episodes))
             })
+            .filter(|result: &Result<(Podcast, Vec<Episode>), Error>| {
+                debug!("{:?}", result);
+                result.is_ok()
+            })
+            .map(|result| result.unwrap())
             .map(|(podcast, episodes)| {
                 let mut artist = Artist::from(podcast.clone());
                 let mut album = Album::from(podcast);

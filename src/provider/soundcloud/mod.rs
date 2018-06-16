@@ -75,7 +75,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
                         (_, Some(playlist)) => provider::ProviderItem::from(
                             Playlist::from(
                                 playlist::SoundcloudPlaylist::from(playlist, &self.client_id))),
-                        _ => provider::ProviderItem::empty()
+                        _ => panic!("something went horribly wrong")
                     })
                     .collect();
                 let folder = provider::ProviderFolder {
@@ -88,15 +88,15 @@ impl provider::ProviderInstance for SoundcloudProvider {
         }
     }
     fn search(&self, query: String) -> Vec<provider::ProviderItem> {
+        trace!("search {}", query);
         let client = self.client();
         client.tracks()
             .query(Some(query))
             .get()
             .unwrap()
             .unwrap_or_else(|| vec![])
-            .iter()
+            .into_iter()
             .filter(|track| track.stream_url.is_some())
-            .cloned()
             .map(|track| track.into())
             .collect()
     }
