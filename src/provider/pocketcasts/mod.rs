@@ -130,8 +130,15 @@ impl provider::ProviderInstance for PocketcastsProvider {
         }
     }
 
-    fn search(&self, _query: String) -> Result<Vec<provider::ProviderItem>, Error> {
-        Ok(vec![])
+    fn search(&self, query: String) -> Result<Vec<provider::ProviderItem>, Error> {
+        let client = self.client.clone().unwrap();
+        let podcasts = client.search_podcasts(query)?;
+        let podcasts = podcasts
+            .into_iter()
+            .map(Album::from)
+            .map(provider::ProviderItem::from)
+            .collect();
+        Ok(podcasts)
     }
 
     fn resolve_track(&self, _uri: &str) -> Result<Option<Track>, Error> {
