@@ -64,15 +64,33 @@ impl provider::ProviderInstance for SpotifyProvider {
 
         debug!("{:?}", albums);
 
-        let albums = albums
+        let albums_len = albums.len();
+
+        let mut tracks = albums
             .into_iter()
             .map(|album| album.album)
-            .map(Album::from);
+            .map(|album| {
+                let mut album_entity = Album::from(album.clone());
+                library.sync_album(&mut album_entity);
+                album.tracks.items
+                    .into_iter()
+                    .map(Track::from)
+                    .map(|mut track| {
+                        track.album_id = album_entity.id;
+                        track
+                    })
+                    .collect()
+            })
+            .fold(vec![], |mut a, b: Vec<Track>| {
+                a.extend(b);
+                a
+            });
 
+        library.sync_tracks(&mut tracks);
 
         Ok(provider::SyncResult {
-            tracks: 0,
-            albums: 0,
+            tracks: tracks.len(),
+            albums: albums_len,
             artists: 0,
             playlists: 0
         })
