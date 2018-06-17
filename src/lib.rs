@@ -20,6 +20,7 @@ extern crate md5;
 extern crate reqwest;
 extern crate image;
 extern crate rspotify;
+extern crate rustic_local_provider;
 
 pub mod cache;
 pub mod bus;

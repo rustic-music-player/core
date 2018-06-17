@@ -9,6 +9,7 @@ mod folder;
 mod pocketcasts;
 mod soundcloud;
 mod spotify;
+mod local;
 
 pub use self::item::{ProviderItem, ProviderItemType};
 pub use self::folder::ProviderFolder;
@@ -18,6 +19,7 @@ pub use self::explorer::Explorer;
 pub use self::pocketcasts::PocketcastsProvider;
 pub use self::soundcloud::SoundcloudProvider;
 pub use self::spotify::SpotifyProvider;
+pub use self::local::LocalProvider;
 
 use std::sync::{Arc, RwLock};
 use std::fmt::Debug;
@@ -39,6 +41,7 @@ pub enum Provider {
     Soundcloud,
     GooglePlayMusic,
     Spotify,
+    #[serde(rename = "local")]
     LocalMedia
 }
 

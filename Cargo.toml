@@ -35,3 +35,6 @@ git = "https://github.com/maxjoehnk/pocketcasts-rs"
 [dependencies.rspotify]
 git = "https://github.com/maxjoehnk/rspotify"
 branch = "feature/debug-client"
+
+[dependencies.rustic-local-provider]
+path = "local-provider"
