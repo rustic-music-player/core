@@ -28,13 +28,11 @@ pub mod library;
 pub mod player;
 pub mod provider;
 pub mod sync;
-pub mod store;
 pub mod error;
 
 pub use provider::{Explorer, Provider};
 pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist};
 pub use player::SharedPlayer;
-pub use store::LibraryStore;
 pub use error::RusticError;
 
 use std::sync::Arc;
@@ -52,7 +50,7 @@ impl Rustic {
         let bus = bus::MessageBus::new();
         Ok(Arc::new(Rustic {
             player: player::Player::new(Arc::clone(&bus))?,
-            library: library::Library::new(),
+            library: library::InMemoryLibrary::new(),
             providers,
             bus,
             cache: Arc::new(cache::Cache::new())

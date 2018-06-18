@@ -35,18 +35,19 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
         loop {
             info!("Caching Coverart...");
             let result: Result<Vec<CachedEntry>, Error> = app.library
-                .tracks
-                .read()
-                .unwrap()
-                .iter()
-                .filter(|track| track.image_url.is_some())
-                .filter(|track| {
-                    let map = app.cache.coverart.read().unwrap();
-                    !map.contains_key(&track.uri)
-                })
-                .map(|track| track.image_url.clone().unwrap())
-                .map(cache_coverart)
-                .collect();
+                .get_tracks()
+                .and_then(|tracks| {
+                    tracks
+                        .iter()
+                        .filter(|track| track.image_url.is_some())
+                        .filter(|track| {
+                            let map = app.cache.coverart.read().unwrap();
+                            !map.contains_key(&track.uri)
+                        })
+                        .map(|track| track.image_url.clone().unwrap())
+                        .map(cache_coverart)
+                        .collect()
+                });
 
             match result {
                 Ok(entries) => {

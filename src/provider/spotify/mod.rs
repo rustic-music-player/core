@@ -86,7 +86,7 @@ impl provider::ProviderInstance for SpotifyProvider {
                 a
             });
 
-        library.sync_tracks(&mut tracks);
+        library.sync_tracks(&mut tracks)?;
 
         Ok(provider::SyncResult {
             tracks: tracks.len(),
