@@ -31,7 +31,7 @@ pub mod sync;
 pub mod error;
 
 pub use provider::{Explorer, Provider};
-pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist};
+pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist, SearchResults};
 pub use player::SharedPlayer;
 pub use error::RusticError;
 
@@ -46,14 +46,40 @@ pub struct Rustic {
 }
 
 impl Rustic {
-    pub fn new(providers: provider::SharedProviders) -> Result<Arc<Rustic>, failure::Error> {
+    pub fn new(library: Box<Library>, providers: provider::SharedProviders) -> Result<Arc<Rustic>, failure::Error> {
+        let library = Arc::new(library);
         let bus = bus::MessageBus::new();
         Ok(Arc::new(Rustic {
             player: player::Player::new(Arc::clone(&bus))?,
-            library: library::InMemoryLibrary::new(),
+            library,
             providers,
             bus,
             cache: Arc::new(cache::Cache::new())
         }))
     }
+
+    pub fn resolve_track(&self, uri: &String) -> Result<Option<Track>, failure::Error> {
+        let track = self
+            .library
+            .get_tracks()?
+            .into_iter()
+            .find(|track| &track.uri == uri);
+
+        match track {
+            Some(track) => Ok(Some(track)),
+            None => {
+                let url = url::Url::parse(uri)?;
+                let provider = self
+                    .providers
+                    .iter()
+                    .find(|provider| provider.read().unwrap().uri_scheme() == url.scheme());
+                let track = match provider {
+                    Some(provider) => provider.read().unwrap().resolve_track(uri)?,
+                    _ => None
+                };
+                Ok(track)
+            }
+        }
+    }
+
 }
