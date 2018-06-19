@@ -1,14 +1,17 @@
 use failure::Error;
 use Rustic;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, Condvar};
 use std::thread;
 use std::time::Duration;
 
-pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
-    let handle = thread::Builder::new()
+pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<thread::JoinHandle<()>, Error> {
+    thread::Builder::new()
         .name("Background Sync".into())
         .spawn(move || {
-            loop {
+            info!("Starting Background Sync");
+            let &(ref lock, ref cvar) = &*running;
+            let mut keep_running = lock.lock().unwrap();
+            while *keep_running {
                 let providers = app.providers.clone();
                 for provider in providers {
                     let mut provider = provider.write().unwrap();
@@ -18,9 +21,10 @@ pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
                         Err(err) => error!("Error syncing {}: {:?}", provider.title(), err)
                     }
                 }
-                thread::sleep(Duration::from_secs(5 * 60));
+                let result = cvar.wait_timeout(keep_running, Duration::from_secs(5 * 60)).unwrap();
+                keep_running = result.0;
             }
-        })?;
-
-    Ok(handle)
+            info!("Background Sync stopped");
+        })
+        .map_err(Error::from)
 }

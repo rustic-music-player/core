@@ -6,7 +6,7 @@ use std::time::Duration;
 use gstreamer::prelude::*;
 use library::Track;
 use bus::{SharedBus, Message};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Condvar};
 use failure::{Error, err_msg};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -215,33 +215,46 @@ impl GstBackend {
     }
 }
 
-pub fn main_loop(player: SharedPlayer) -> thread::JoinHandle<()> {
-    thread::spawn(move|| {
-        loop {
-            {
-                let mut player = player.lock().unwrap();
-                if let Ok(bus) = player.get_backend().get_bus() {
-                    match bus.pop() {
-                        None => Ok(()),
-                        Some(msg) => {
-                            match msg.view() {
-                                MessageView::Eos(..) => player.next(),
-                                MessageView::Error(err) => {
-                                    println!(
-                                        "Error from {}: {} ({:?})",
-                                        msg.get_src().unwrap().get_path_string(),
-                                        err.get_error(),
-                                        err.get_debug()
-                                    );
-                                    break;
-                                },
-                                _ => Ok(()),
-                            }
-                        },
-                    }.unwrap()
+pub fn main_loop(player: SharedPlayer, running: Arc<(Mutex<bool>, Condvar)>) -> Result<thread::JoinHandle<()>, Error> {
+    thread::Builder::new()
+        .name("GStreamer Backend".into())
+        .spawn(move|| {
+            info!("Starting GStreamer Backend");
+            let &(ref lock, ref cvar) = &*running;
+            let mut keep_running = lock.lock().unwrap();
+            while *keep_running {
+                {
+                    let mut player = player.lock().unwrap();
+                    if let Ok(bus) = player.get_backend().get_bus() {
+                        match bus.pop() {
+                            None => Ok(()),
+                            Some(msg) => {
+                                match msg.view() {
+                                    MessageView::Eos(..) => player.next(),
+                                    MessageView::Error(err) => {
+                                        println!(
+                                            "Error from {}: {} ({:?})",
+                                            msg.get_src().unwrap().get_path_string(),
+                                            err.get_error(),
+                                            err.get_debug()
+                                        );
+                                        break;
+                                    },
+                                    _ => Ok(()),
+                                }
+                            },
+                        }.unwrap()
+                    }
                 }
+                let result = cvar.wait_timeout(keep_running, Duration::from_millis(100)).unwrap();
+                keep_running = result.0;
             }
-            thread::sleep(Duration::from_millis(100));
-        }
-    })
+            info!("Stopping GStreamer Backend");
+            { // Cleanup
+                let mut player = player.lock().unwrap();
+                player.stop().unwrap();
+            }
+            info!("GStreamer Backend stopped");
+        })
+        .map_err(Error::from)
 }

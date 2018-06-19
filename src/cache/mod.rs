@@ -1,5 +1,5 @@
 use std::fs::{create_dir_all, OpenOptions};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, Mutex, Condvar};
 use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
@@ -28,42 +28,49 @@ pub struct Cache {
 
 pub type SharedCache = Arc<Cache>;
 
-pub fn start(app: Arc<Rustic>) -> Result<thread::JoinHandle<()>, Error> {
+pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<thread::JoinHandle<()>, Error> {
     create_dir_all(".cache/coverart")?;
 
-    let handle = thread::spawn(move || {
-        loop {
-            info!("Caching Coverart...");
-            let result: Result<Vec<CachedEntry>, Error> = app.library
-                .get_tracks()
-                .and_then(|tracks| {
-                    tracks
-                        .iter()
-                        .filter(|track| track.image_url.is_some())
-                        .filter(|track| {
-                            let map = app.cache.coverart.read().unwrap();
-                            !map.contains_key(&track.uri)
-                        })
-                        .map(|track| track.image_url.clone().unwrap())
-                        .map(cache_coverart)
-                        .collect()
-                });
+    thread::Builder::new()
+        .name("Coverart Cache".into())
+        .spawn(move || {
+            info!("Starting Coverart Cache");
+            let &(ref lock, ref cvar) = &*running;
+            let mut keep_running = lock.lock().unwrap();
+            while *keep_running {
+                info!("Caching Coverart...");
+                let result: Result<Vec<CachedEntry>, Error> = app.library
+                    .get_tracks()
+                    .and_then(|tracks| {
+                        tracks
+                            .iter()
+                            .filter(|track| track.image_url.is_some())
+                            .filter(|track| {
+                                let map = app.cache.coverart.read().unwrap();
+                                !map.contains_key(&track.uri)
+                            })
+                            .map(|track| track.image_url.clone().unwrap())
+                            .map(cache_coverart)
+                            .collect()
+                    });
 
-            match result {
-                Ok(entries) => {
-                    info!("Cached {} images", entries.len());
-                    let mut map = app.cache.coverart.write().unwrap();
-                    for entry in entries {
-                        map.insert(entry.uri, entry.filename);
-                    }
-                },
-                Err(e) => error!("Error: {:?}", e)
+                match result {
+                    Ok(entries) => {
+                        info!("Cached {} images", entries.len());
+                        let mut map = app.cache.coverart.write().unwrap();
+                        for entry in entries {
+                            map.insert(entry.uri, entry.filename);
+                        }
+                    },
+                    Err(e) => error!("Error: {:?}", e)
+                }
+
+                let result = cvar.wait_timeout(keep_running, Duration::new(SERVICE_INTERVAL, 0)).unwrap();
+                keep_running = result.0;
             }
-
-            thread::sleep(Duration::new(SERVICE_INTERVAL, 0));
-        }
-    });
-    Ok(handle)
+            info!("Coverart Cache stopped");
+        })
+        .map_err(Error::from)
 }
 
 fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
