@@ -70,8 +70,7 @@ impl provider::ProviderInstance for SoundcloudProvider {
                     .map(|like| (like.track, like.playlist))
                     .map(|like| match like {
                         (Some(track), _) => provider::ProviderItem::from(
-                            Track::from(
-                                track::SoundcloudTrack::from(track))),
+                            Track::from(track)),
                         (_, Some(playlist)) => provider::ProviderItem::from(
                             Playlist::from(
                                 playlist::SoundcloudPlaylist::from(playlist, &self.client_id))),
@@ -109,12 +108,9 @@ impl provider::ProviderInstance for SoundcloudProvider {
             .get()
             .ok()
             .map(|mut track| {
-                if track.stream_url.is_some() {
-                    track.stream_url = Some(format!("{}?client_id={}", track.stream_url.unwrap(), self.client_id.clone()))
-                }
+                track.stream_url = track.stream_url.map(|url| format!("{}?client_id={}", url, self.client_id.clone()));
                 track
             })
-            .map(track::SoundcloudTrack::from)
             .map(Track::from);
         Ok(track)
     }

@@ -8,6 +8,12 @@ impl From<Podcast> for Album {
             id: None,
             title: podcast.title,
             artist_id: None,
+            artist: Some(Artist {
+                id: None,
+                uri: format!("pocketcasts://interpret/{}", podcast.author),
+                name: podcast.author,
+                image_url: None
+            }),
             provider: Provider::Pocketcasts,
             image_url: podcast.thumbnail_url,
             uri: format!("pocketcasts://podcast/{}", podcast.uuid)

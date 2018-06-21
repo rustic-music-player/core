@@ -1,12 +1,14 @@
 use provider::Provider;
 use std::sync::Arc;
 use Rustic;
+use library::Artist;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Album {
     pub id: Option<usize>,
     pub title: String,
     pub artist_id: Option<usize>,
+    pub artist: Option<Artist>,
     pub provider: Provider,
     pub image_url: Option<String>,
     pub uri: String

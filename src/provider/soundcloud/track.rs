@@ -1,46 +1,32 @@
 use soundcloud;
 use provider;
-use library::Track;
+use library::{Track, Artist};
 
-#[derive(Debug, Clone)]
-pub struct SoundcloudTrack {
-    pub id: u64,
-    pub title: String,
-    pub url: Option<String>,
-    pub coverart: Option<String>,
-    pub duration: u64
-}
-
-impl From<SoundcloudTrack> for Track {
-    fn from(track: SoundcloudTrack) -> Track {
+impl From<soundcloud::Track> for Track {
+    fn from(track: soundcloud::Track) -> Track {
         Track {
             id: None,
             title: track.title,
+            artist: Some(Artist {
+                id: None,
+                name: track.user.username,
+                image_url: Some(track.user.avatar_url),
+                uri: format!("soundcloud://user/{}", track.user.id)
+            }),
             artist_id: None,
+            album: None,
             album_id: None,
-            stream_url: track.url.unwrap(),
+            stream_url: track.stream_url.unwrap(),
             provider: provider::Provider::Soundcloud,
             uri: format!("soundcloud://track/{}", track.id),
-            image_url: track.coverart,
+            image_url: track.artwork_url,
             duration: Some(track.duration)
-        }
-    }
-}
-
-impl From<soundcloud::Track> for SoundcloudTrack {
-    fn from(track: soundcloud::Track) -> SoundcloudTrack {
-        SoundcloudTrack {
-            id: track.id,
-            title: track.title,
-            url: track.stream_url,
-            coverart: track.artwork_url,
-            duration: track.duration
         }
     }
 }
 
 impl From<soundcloud::Track> for provider::ProviderItem {
     fn from(track: soundcloud::Track) -> provider::ProviderItem {
-        provider::ProviderItem::from(Track::from(SoundcloudTrack::from(track)))
+        provider::ProviderItem::from(Track::from(track))
     }
 }

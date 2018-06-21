@@ -143,10 +143,12 @@ fn convert_images(images: &Vec<Image>) -> Option<String> {
 
 impl From<FullAlbum> for Album {
     fn from(album: FullAlbum) -> Self {
+        let artist = artists_to_artist(album.artists);
         Album {
             id: None,
             title: album.name,
             artist_id: None,
+            artist,
             provider: provider::Provider::Spotify,
             image_url: convert_images(&album.images),
             uri: format!("spotify://album/{}", album.id)
@@ -156,10 +158,12 @@ impl From<FullAlbum> for Album {
 
 impl From<SimplifiedAlbum> for Album {
     fn from(album: SimplifiedAlbum) -> Self {
+        let artist = artists_to_artist(album.artists);
         Album {
             id: None,
             title: album.name,
             artist_id: None,
+            artist,
             provider: provider::Provider::Spotify,
             image_url: convert_images(&album.images),
             uri: format!("spotify://album/{}", album.id)
@@ -191,11 +195,22 @@ impl From<SimplifiedArtist> for Artist {
 
 impl From<FullTrack> for Track {
     fn from(track: FullTrack) -> Self {
+        let artist = artists_to_artist(track.artists);
         Track {
             id: None,
             title: track.name,
             artist_id: None,
+            artist: artist.clone(),
             album_id: None,
+            album: Some(Album {
+                id: None,
+                title: track.album.name,
+                artist_id: None,
+                artist,
+                provider: provider::Provider::Spotify,
+                image_url: convert_images(&track.album.images),
+                uri: format!("spotify://album/{}", track.album.id)
+            }),
             stream_url: String::new(),
             provider: provider::Provider::Spotify,
             image_url: convert_images(&track.album.images),
@@ -207,11 +222,14 @@ impl From<FullTrack> for Track {
 
 impl From<SimplifiedTrack> for Track {
     fn from(track: SimplifiedTrack) -> Self {
+        let artist = artists_to_artist(track.artists);
         Track {
             id: None,
             title: track.name,
             artist_id: None,
+            artist,
             album_id: None,
+            album: None,
             stream_url: String::new(),
             provider: provider::Provider::Spotify,
             image_url: None,
@@ -219,4 +237,20 @@ impl From<SimplifiedTrack> for Track {
             duration: Some(track.duration_ms as u64)
         }
     }
+}
+
+fn artists_to_artist(artists: Vec<SimplifiedArtist>) -> Option<Artist> {
+    if artists.len() == 0 {
+        return None;
+    }
+    let name = artists.into_iter()
+            .map(|artist| artist.name)
+            .collect::<Vec<String>>()
+            .join(", ");
+    Some(Artist {
+        id: None,
+        name,
+        uri: String::new(),
+        image_url: None
+    })
 }

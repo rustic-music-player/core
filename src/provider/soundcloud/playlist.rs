@@ -1,13 +1,12 @@
 use soundcloud;
 use provider;
 use library::{Playlist, Track};
-use super::track::SoundcloudTrack;
 
 #[derive(Debug, Clone)]
 pub struct SoundcloudPlaylist {
     pub id: u64,
     pub title: String,
-    pub tracks: Vec<SoundcloudTrack>
+    pub tracks: Vec<Track>
 }
 
 impl SoundcloudPlaylist {
@@ -19,14 +18,11 @@ impl SoundcloudPlaylist {
                 .tracks
                 .iter()
                 .cloned()
-                .map(SoundcloudTrack::from)
-                .filter(|track| track.url.is_some())
-                .map(|track| SoundcloudTrack {
-                    id: track.id,
-                    title: track.title,
-                    url: track.url.map(|url| format!("{}?client_id={}", url, client_id)),
-                    coverart: track.coverart,
-                    duration: track.duration
+                .filter(|track| track.stream_url.is_some())
+                .map(Track::from)
+                .map(|track| Track {
+                    stream_url: format!("{}?client_id={}", track.stream_url, client_id),
+                    ..track
                 })
                 .collect()
         }
@@ -38,12 +34,7 @@ impl From<SoundcloudPlaylist> for Playlist {
         Playlist {
             id: None,
             title: playlist.title,
-            tracks: playlist.tracks
-                .iter()
-                .cloned()
-                .map(SoundcloudTrack::from)
-                .map(Track::from)
-                .collect(),
+            tracks: playlist.tracks,
             provider: provider::Provider::Soundcloud,
             uri: format!("soundcloud://playlist/{}", playlist.id)
         }
@@ -59,8 +50,8 @@ impl From<soundcloud::Playlist> for SoundcloudPlaylist {
                 .tracks
                 .iter()
                 .cloned()
-                .map(SoundcloudTrack::from)
-                .filter(|track| track.url.is_some())
+                .filter(|track| track.stream_url.is_some())
+                .map(Track::from)
                 .collect()
         }
     }

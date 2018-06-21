@@ -62,7 +62,22 @@ impl From<local::Track> for library::Track {
             id: None,
             title: track.title,
             album_id: None,
+            album: track.album.map(|name| library::Album {
+                id: None,
+                title: name,
+                artist_id: None,
+                artist: None,
+                provider: Provider::LocalMedia,
+                image_url: None,
+                uri: String::new(),
+            }),
             artist_id: None,
+            artist: track.artist.map(|name| library::Artist {
+                id: None,
+                name,
+                uri: String::new(),
+                image_url: None
+            }),
             image_url: None,
             stream_url: format!("file://{}", track.path),
             provider: Provider::LocalMedia,
