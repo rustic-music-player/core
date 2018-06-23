@@ -10,12 +10,10 @@ use std::sync::{Arc, Mutex, Condvar};
 use failure::{Error, err_msg};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum PlayerState {
-    #[serde(rename = "play")]
     Play,
-    #[serde(rename = "stop")]
     Stop,
-    #[serde(rename = "pause")]
     Pause
 }
 
@@ -56,14 +54,14 @@ impl Player {
                 let current = self.queue.current();
                 if let Some(track) = current {
                     self.state = PlayerState::Play;
-                    self.bus.lock().unwrap().emit(&Message::PlayerState);
+                    self.bus.lock().unwrap().emit(&Message::PlayerState(PlayerState::Play));
                     self.select_track(&track)?;
                 }
                 Ok(())
             },
             PlayerState::Pause => {
                 self.state = PlayerState::Play;
-                self.bus.lock().unwrap().emit(&Message::PlayerState);
+                self.bus.lock().unwrap().emit(&Message::PlayerState(PlayerState::Play));
                 self.backend.play()?;
                 Ok(())
             },
@@ -73,13 +71,14 @@ impl Player {
 
     pub fn pause(&mut self) -> Result<(), Error> {
         self.state = PlayerState::Pause;
-        self.bus.lock().unwrap().emit(&Message::PlayerState);
+        self.bus.lock().unwrap().emit(&Message::PlayerState(PlayerState::Pause));
         self.backend.pause()
     }
 
     pub fn stop(&mut self) -> Result<(), Error> {
         self.state = PlayerState::Stop;
-        self.bus.lock().unwrap().emit(&Message::PlayerState);
+        self.bus.lock().unwrap().emit(&Message::PlayerState(PlayerState::Stop));
+        self.bus.lock().unwrap().emit(&Message::CurrentlyPlaying(None));
         self.backend.stop()?;
         self.queue.clear();
         Ok(())
@@ -89,7 +88,8 @@ impl Player {
         {
             if self.queue.prev().is_none() {
                 self.state = PlayerState::Stop;
-                self.bus.lock().unwrap().emit(&Message::PlayerState);
+                self.bus.lock().unwrap().emit(&Message::PlayerState(PlayerState::Stop));
+                self.bus.lock().unwrap().emit(&Message::CurrentlyPlaying(None));
                 self.backend.stop()?;
             }
         }
@@ -105,7 +105,8 @@ impl Player {
         {
             if self.queue.next().is_none() {
                 self.state = PlayerState::Stop;
-                self.bus.lock().unwrap().emit(&Message::PlayerState);
+                self.bus.lock().unwrap().emit(&Message::PlayerState(PlayerState::Stop));
+                self.bus.lock().unwrap().emit(&Message::CurrentlyPlaying(None));
                 self.backend.stop()?;
             }
         }
@@ -133,6 +134,7 @@ impl Player {
     }
 
     fn select_track(&self, track: &Track) -> Result<(), Error> {
+        self.bus.lock().unwrap().emit(&Message::CurrentlyPlaying(Some(track.clone())));
         self.backend.set_track(track, self.state.clone())
     }
 }
