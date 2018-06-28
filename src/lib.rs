@@ -21,36 +21,37 @@ extern crate reqwest;
 extern crate image;
 extern crate rspotify;
 extern crate rustic_local_provider;
+extern crate crossbeam_channel as channel;
+extern crate rodio;
 
 pub mod cache;
 pub mod bus;
 pub mod library;
-pub mod player;
+// pub mod player;
 pub mod provider;
 pub mod sync;
-pub mod error;
+pub mod backends;
 
 pub use provider::{Explorer, Provider};
 pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist, SearchResults};
-pub use player::SharedPlayer;
-pub use error::RusticError;
+pub use backends::{PlayerBackend, PlayerState, RodioBackend, GstBackend};
 
 use std::sync::Arc;
 
 pub struct Rustic {
     pub bus: bus::SharedBus,
-    pub player: player::SharedPlayer,
+    pub player: Arc<Box<PlayerBackend>>,
     pub library: library::SharedLibrary,
     pub providers: provider::SharedProviders,
     pub cache: cache::SharedCache
 }
 
 impl Rustic {
-    pub fn new(library: Box<Library>, providers: provider::SharedProviders) -> Result<Arc<Rustic>, failure::Error> {
+    pub fn new(library: Box<Library>, providers: provider::SharedProviders, player: Box<PlayerBackend>) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
         let bus = bus::MessageBus::new();
         Ok(Arc::new(Rustic {
-            player: player::Player::new(Arc::clone(&bus))?,
+            player: Arc::new(player),
             library,
             providers,
             bus,

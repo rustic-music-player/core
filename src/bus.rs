@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
 use std::fmt;
-use player;
+// use player;
 use library::Track;
+use backends::state::PlayerState;
 
 pub type SharedBus = Arc<Mutex<MessageBus>>;
 
@@ -10,7 +11,7 @@ type Subscriber = Fn(Message) -> () + Send + Sync + 'static;
 #[derive(Debug, Clone, Serialize)]
 pub enum Message {
     Volume,
-    PlayerState(player::PlayerState),
+    PlayerState(PlayerState),
     CurrentlyPlaying(Option<Track>),
     Queue,
     Playlist
