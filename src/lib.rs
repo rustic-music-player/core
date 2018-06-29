@@ -6,8 +6,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate rayon;
-extern crate gstreamer;
-extern crate glib;
 extern crate libc;
 extern crate url;
 extern crate soundcloud;
@@ -22,19 +20,17 @@ extern crate image;
 extern crate rspotify;
 extern crate rustic_local_provider;
 extern crate crossbeam_channel as channel;
-extern crate rodio;
 
 pub mod cache;
 pub mod bus;
 pub mod library;
-// pub mod player;
 pub mod provider;
 pub mod sync;
-pub mod backends;
+pub mod player;
 
 pub use provider::{Explorer, Provider};
 pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist, SearchResults};
-pub use backends::{PlayerBackend, PlayerState, RodioBackend, GstBackend};
+pub use player::{PlayerBackend, PlayerState, PlayerEvent};
 
 use std::sync::Arc;
 

@@ -1,8 +1,7 @@
 use std::sync::{Arc, Mutex};
 use std::fmt;
-// use player;
 use library::Track;
-use backends::state::PlayerState;
+use player::state::PlayerState;
 
 pub type SharedBus = Arc<Mutex<MessageBus>>;
 
