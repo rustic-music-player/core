@@ -50,10 +50,10 @@ pub trait PlayerBackend: Send + Sync {
     fn state(&self) -> PlayerState;
 
     /// Set the volume of this player
-    fn set_volume(&mut self, volume: usize) -> Result<(), Error>;
+    fn set_volume(&mut self, volume: f32) -> Result<(), Error>;
 
     /// Get the volume of this player
-    fn volume(&self) -> usize;
+    fn volume(&self) -> f32;
 
     /// Set time from the end of the current track when the next track should start playing
     fn set_blend_time(&mut self, duration: Duration) -> Result<(), Error>;

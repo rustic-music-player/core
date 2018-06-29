@@ -73,7 +73,7 @@ impl GstBackend {
                                 MessageView::Eos(..) => {
                                     println!("eos");
                                     let backend = Arc::clone(&backend);
-                                    backend.next()?;
+                                    //backend.next()?;
                                     Ok(())
                                 },
                                 MessageView::Error(err) => {
@@ -103,13 +103,19 @@ impl GstBackend {
         }
         self.decoder.set_property_from_str("uri", track.stream_url.as_str());
 
-        if let StateChangeReturn::Failure = self.pipeline.set_state(self.state.lock().unwrap().clone().into()) {
+        let state = match *self.state.lock().unwrap() {
+            PlayerState::Play => gst::State::Playing,
+            PlayerState::Pause => gst::State::Paused,
+            PlayerState::Stop => gst::State::Null
+        };
+
+        if let StateChangeReturn::Failure = self.pipeline.set_state(state) {
             bail!("can't restart pipeline")
         }
         Ok(())
     }
 }
-
+/*
 impl PlayerBackend for GstBackend {
     fn enqueue(&mut self, track: &Track) {
         let mut queue = self.queue.lock().unwrap();
@@ -210,4 +216,4 @@ impl PlayerBackend for GstBackend {
     fn observe(&self) -> Receiver<PlayerEvent> {
         unimplemented!()
     }
-}
+}*/

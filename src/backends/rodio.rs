@@ -1,41 +1,58 @@
-use rodio;
-use library::Track;
+use channel::{self, Receiver, Sender};
 use failure::Error;
+use library::Track;
+use rodio;
+use std::fs::File;
+use std::io::BufReader;
+use std::io::prelude::*;
+use std::sync::Arc;
+use std::time::Duration;
 use super::player::*;
 use super::state::PlayerState;
-use std::time::Duration;
-use channel::{self, Receiver, Sender};
-use std::sync::Arc;
+use url::Url;
 
 pub struct RodioBackend {
     queue: Vec<Track>,
     current_index: usize,
     current_track: Option<Track>,
-    current_volume: usize,
     state: PlayerState,
     blend_time: Duration,
-    device: rodio::Device,
+    sink: rodio::Sink,
     tx: Sender<PlayerEvent>,
-    rx: Receiver<PlayerEvent>
+    rx: Receiver<PlayerEvent>,
 }
 
 impl RodioBackend {
     pub fn new() -> Result<Arc<RodioBackend>, Error> {
         let device = rodio::default_output_device().unwrap();
+        let sink = rodio::Sink::new(&device);
         let (tx, rx) = channel::unbounded();
         let backend = RodioBackend {
             queue: vec![],
             current_index: 0,
             current_track: None,
-            current_volume: 0,
             state: PlayerState::Stop,
             blend_time: Duration::default(),
-            device,
+            sink,
             tx,
-            rx
+            rx,
         };
 
         Ok(Arc::new(backend))
+    }
+
+    fn decode_stream(url: String) -> Result<rodio::Decoder<BufReader<File>>, Error> {
+        let url = Url::parse(&url)?;
+        match url.scheme() {
+            "file" => {
+                let mut path = url.as_str().to_owned();
+                path.replace_range(..7, "");
+                let file = File::open(path)?;
+                let decoder = rodio::Decoder::new(BufReader::new(file))?;
+                Ok(decoder)
+            },
+            scheme => bail!("Invalid scheme: {}", scheme)
+        }
     }
 }
 
@@ -61,7 +78,7 @@ impl PlayerBackend for RodioBackend {
     }
 
     fn current(&self) -> Option<Track> {
-        unimplemented!()
+        self.queue.get(self.current_index).cloned()
     }
 
     fn prev(&mut self) -> Result<Option<()>, Error> {
@@ -73,19 +90,31 @@ impl PlayerBackend for RodioBackend {
     }
 
     fn set_state(&mut self, state: PlayerState) -> Result<(), Error> {
-        unimplemented!()
+        match state {
+            PlayerState::Play => {
+                let track = self.current().unwrap();
+                let source = RodioBackend::decode_stream(track.stream_url)?;
+                self.sink.append(source);
+                self.sink.play();
+            }
+            PlayerState::Pause => self.sink.pause(),
+            PlayerState::Stop => self.sink.stop()
+        }
+        self.state = state;
+        Ok(())
     }
 
     fn state(&self) -> PlayerState {
         unimplemented!()
     }
 
-    fn set_volume(&mut self, volume: usize) -> Result<(), Error> {
-        unimplemented!()
+    fn set_volume(&mut self, volume: f32) -> Result<(), Error> {
+        self.sink.set_volume(volume);
+        Ok(())
     }
 
-    fn volume(&self) -> usize {
-        unimplemented!()
+    fn volume(&self) -> f32 {
+        self.sink.volume()
     }
 
     fn set_blend_time(&mut self, duration: Duration) -> Result<(), Error> {
@@ -101,6 +130,6 @@ impl PlayerBackend for RodioBackend {
     }
 
     fn observe(&self) -> Receiver<PlayerEvent> {
-        unimplemented!()
+        self.rx.clone()
     }
 }

@@ -17,7 +17,7 @@ fn create_test_track() -> core::Track {
         }),
         album_id: None,
         album: None,
-        stream_url: String::from("file://./local_provider/assets/bensound-ukulele.mp3"),
+        stream_url: String::from("file://local-provider/assets/bensound-ukulele.mp3"),
         provider: core::Provider::LocalMedia,
         uri: String::new(),
         image_url: None,
@@ -29,15 +29,6 @@ fn create_test_track() -> core::Track {
 fn test_rodio_playback() {
     let track = create_test_track();
     let mut backend = core::RodioBackend::new().unwrap();
-    let player = Arc::get_mut(&mut backend).unwrap();
-    player.enqueue(&track);
-    player.set_state(core::PlayerState::Play).unwrap();
-}
-
-#[test]
-fn test_gstreamer_playback() {
-    let track = create_test_track();
-    let mut backend = core::GstBackend::new().unwrap();
     let player = Arc::get_mut(&mut backend).unwrap();
     player.enqueue(&track);
     player.set_state(core::PlayerState::Play).unwrap();
