@@ -43,11 +43,11 @@ pub struct Rustic {
 }
 
 impl Rustic {
-    pub fn new(library: Box<Library>, providers: provider::SharedProviders, player: Box<PlayerBackend>) -> Result<Arc<Rustic>, failure::Error> {
+    pub fn new(library: Box<Library>, providers: provider::SharedProviders, player: Arc<Box<PlayerBackend>>) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
         let bus = bus::MessageBus::new();
         Ok(Arc::new(Rustic {
-            player: Arc::new(player),
+            player,
             library,
             providers,
             bus,

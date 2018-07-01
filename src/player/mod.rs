@@ -5,6 +5,7 @@ use failure::Error;
 use std::time::Duration;
 use channel::Receiver;
 use library::Track;
+use std::any::Any;
 
 pub use self::event::PlayerEvent;
 pub use self::state::PlayerState;
@@ -57,4 +58,6 @@ pub trait PlayerBackend: Send + Sync {
     fn seek(&mut self, duration: Duration) -> Result<(), Error>;
 
     fn observe(&self) -> Receiver<PlayerEvent>;
+
+    fn as_any(&self) -> &Any;
 }
