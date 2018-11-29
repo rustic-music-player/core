@@ -2,6 +2,7 @@ use super::state::PlayerState;
 use library::Track;
 use std::time::Duration;
 
+#[derive(Debug)]
 pub enum PlayerEvent {
     /// Emitted when the player state changes
     StateChanged(PlayerState),

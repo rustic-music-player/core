@@ -22,7 +22,6 @@ extern crate rustic_local_provider;
 extern crate crossbeam_channel as channel;
 
 pub mod cache;
-pub mod bus;
 pub mod library;
 pub mod provider;
 pub mod sync;
@@ -35,7 +34,6 @@ pub use player::{PlayerBackend, PlayerState, PlayerEvent};
 use std::sync::Arc;
 
 pub struct Rustic {
-    pub bus: bus::SharedBus,
     pub player: Arc<Box<PlayerBackend>>,
     pub library: library::SharedLibrary,
     pub providers: provider::SharedProviders,
@@ -45,12 +43,10 @@ pub struct Rustic {
 impl Rustic {
     pub fn new(library: Box<Library>, providers: provider::SharedProviders, player: Arc<Box<PlayerBackend>>) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
-        let bus = bus::MessageBus::new();
         Ok(Arc::new(Rustic {
             player,
             library,
             providers,
-            bus,
             cache: Arc::new(cache::Cache::new())
         }))
     }
