@@ -42,10 +42,10 @@ pub trait PlayerBackend: Send + Sync {
     /// Get the player state
     fn state(&self) -> PlayerState;
 
-    /// Set the volume of this player
+    /// Set the volume of this player (from 0 to 1)
     fn set_volume(&self, volume: f32) -> Result<(), Error>;
 
-    /// Get the volume of this player
+    /// Get the volume of this player (from 0 to 1)
     fn volume(&self) -> f32;
 
     /// Set time from the end of the current track when the next track should start playing
