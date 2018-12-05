@@ -6,7 +6,3 @@ rust:
 matrix:
     allow_failures:
         - rust: nightly
-addons:
-    apt:
-        packages:
-            - gstreamer1.0-plugins-*

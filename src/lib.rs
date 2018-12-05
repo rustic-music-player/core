@@ -6,8 +6,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate rayon;
-extern crate gstreamer;
-extern crate glib;
 extern crate libc;
 extern crate url;
 extern crate soundcloud;
@@ -21,39 +19,34 @@ extern crate reqwest;
 extern crate image;
 extern crate rspotify;
 extern crate rustic_local_provider;
+extern crate crossbeam_channel as channel;
 
 pub mod cache;
-pub mod bus;
 pub mod library;
-pub mod player;
 pub mod provider;
 pub mod sync;
-pub mod error;
+pub mod player;
 
 pub use provider::{Explorer, Provider};
 pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist, SearchResults};
-pub use player::SharedPlayer;
-pub use error::RusticError;
+pub use player::{PlayerBackend, PlayerState, PlayerEvent};
 
 use std::sync::Arc;
 
 pub struct Rustic {
-    pub bus: bus::SharedBus,
-    pub player: player::SharedPlayer,
+    pub player: Arc<Box<PlayerBackend>>,
     pub library: library::SharedLibrary,
     pub providers: provider::SharedProviders,
     pub cache: cache::SharedCache
 }
 
 impl Rustic {
-    pub fn new(library: Box<Library>, providers: provider::SharedProviders) -> Result<Arc<Rustic>, failure::Error> {
+    pub fn new(library: Box<Library>, providers: provider::SharedProviders, player: Arc<Box<PlayerBackend>>) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
-        let bus = bus::MessageBus::new();
         Ok(Arc::new(Rustic {
-            player: player::Player::new(Arc::clone(&bus))?,
+            player,
             library,
             providers,
-            bus,
             cache: Arc::new(cache::Cache::new())
         }))
     }
