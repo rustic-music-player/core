@@ -3,13 +3,7 @@ extern crate log;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
-extern crate rayon;
-extern crate libc;
 extern crate url;
-extern crate soundcloud;
-extern crate pocketcasts;
 #[macro_use]
 extern crate failure;
 #[macro_use]
@@ -17,8 +11,6 @@ extern crate failure_derive;
 extern crate md5;
 extern crate reqwest;
 extern crate image;
-extern crate rspotify;
-extern crate rustic_local_provider;
 extern crate crossbeam_channel as channel;
 
 pub mod cache;
