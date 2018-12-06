@@ -8,20 +8,20 @@ extern crate url;
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
+extern crate crossbeam_channel as channel;
+extern crate image;
 extern crate md5;
 extern crate reqwest;
-extern crate image;
-extern crate crossbeam_channel as channel;
 
 pub mod cache;
 pub mod library;
+pub mod player;
 pub mod provider;
 pub mod sync;
-pub mod player;
 
+pub use library::{Album, Artist, Library, Playlist, SearchResults, SharedLibrary, Track};
+pub use player::{PlayerBackend, PlayerEvent, PlayerState};
 pub use provider::{Explorer, Provider};
-pub use library::{SharedLibrary, Library, Track, Artist, Album, Playlist, SearchResults};
-pub use player::{PlayerBackend, PlayerState, PlayerEvent};
 
 use std::sync::Arc;
 
@@ -29,17 +29,21 @@ pub struct Rustic {
     pub player: Arc<Box<PlayerBackend>>,
     pub library: library::SharedLibrary,
     pub providers: provider::SharedProviders,
-    pub cache: cache::SharedCache
+    pub cache: cache::SharedCache,
 }
 
 impl Rustic {
-    pub fn new(library: Box<Library>, providers: provider::SharedProviders, player: Arc<Box<PlayerBackend>>) -> Result<Arc<Rustic>, failure::Error> {
+    pub fn new(
+        library: Box<Library>,
+        providers: provider::SharedProviders,
+        player: Arc<Box<PlayerBackend>>,
+    ) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
         Ok(Arc::new(Rustic {
             player,
             library,
             providers,
-            cache: Arc::new(cache::Cache::new())
+            cache: Arc::new(cache::Cache::new()),
         }))
     }
 
@@ -60,11 +64,10 @@ impl Rustic {
                     .find(|provider| provider.read().unwrap().uri_scheme() == url.scheme());
                 let track = match provider {
                     Some(provider) => provider.read().unwrap().resolve_track(uri)?,
-                    _ => None
+                    _ => None,
                 };
                 Ok(track)
             }
         }
     }
-
 }

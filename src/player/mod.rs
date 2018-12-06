@@ -1,11 +1,11 @@
-pub mod state;
 pub mod event;
+pub mod state;
 
-use failure::Error;
-use std::time::Duration;
 use channel::Receiver;
+use failure::Error;
 use library::Track;
 use std::any::Any;
+use std::time::Duration;
 
 pub use self::event::PlayerEvent;
 pub use self::state::PlayerState;

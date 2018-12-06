@@ -1,18 +1,18 @@
 use failure::Error;
 
 mod explorer;
-mod sync_error;
-mod item;
 mod folder;
+mod item;
+mod sync_error;
 
-pub use self::item::{ProviderItem, ProviderItemType};
-pub use self::folder::ProviderFolder;
-pub use self::sync_error::SyncError;
 pub use self::explorer::Explorer;
+pub use self::folder::ProviderFolder;
+pub use self::item::{ProviderItem, ProviderItemType};
+pub use self::sync_error::SyncError;
 
-use std::sync::{Arc, RwLock};
-use std::fmt::Debug;
 use library::{SharedLibrary, Track};
+use std::fmt::Debug;
+use std::sync::{Arc, RwLock};
 
 pub type SharedProviders = Vec<Arc<RwLock<Box<ProviderInstance + Send + Sync>>>>;
 
@@ -20,7 +20,7 @@ pub struct SyncResult {
     pub tracks: usize,
     pub albums: usize,
     pub artists: usize,
-    pub playlists: usize
+    pub playlists: usize,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -31,7 +31,7 @@ pub enum Provider {
     GooglePlayMusic,
     Spotify,
     #[serde(rename = "local")]
-    LocalMedia
+    LocalMedia,
 }
 
 pub trait ProviderInstance: Debug {
@@ -50,5 +50,5 @@ pub enum NavigationError {
     #[fail(display = "Path not found")]
     PathNotFound,
     #[fail(display = "can't fetch")]
-    FetchError
+    FetchError,
 }

@@ -1,5 +1,5 @@
-use provider::Provider;
 use library::Track;
+use provider::Provider;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone, Serialize)]
@@ -8,7 +8,7 @@ pub struct Playlist {
     pub title: String,
     pub tracks: Vec<Track>,
     pub provider: Provider,
-    pub uri: String
+    pub uri: String,
 }
 
 impl PartialEq for Playlist {
@@ -18,7 +18,6 @@ impl PartialEq for Playlist {
 }
 
 impl Eq for Playlist {}
-
 
 impl PartialOrd for Playlist {
     fn partial_cmp(&self, other: &Playlist) -> Option<Ordering> {

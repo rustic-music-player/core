@@ -1,8 +1,8 @@
+use library::{Album, Artist};
 use provider::Provider;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use Rustic;
-use library::{Artist, Album};
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Track {
@@ -16,7 +16,7 @@ pub struct Track {
     pub provider: Provider,
     pub uri: String,
     pub image_url: Option<String>,
-    pub duration: Option<u64>
+    pub duration: Option<u64>,
 }
 
 impl Track {

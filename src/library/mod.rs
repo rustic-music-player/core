@@ -6,6 +6,6 @@ mod track;
 
 pub use self::album::Album;
 pub use self::artist::Artist;
-pub use self::library::{Library, SharedLibrary, SearchResults};
+pub use self::library::{Library, SearchResults, SharedLibrary};
 pub use self::playlist::Playlist;
 pub use self::track::Track;

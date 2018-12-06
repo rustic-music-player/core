@@ -1,12 +1,12 @@
-use Rustic;
 use std::sync::Arc;
+use Rustic;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Artist {
     pub id: Option<usize>,
     pub name: String,
     pub uri: String,
-    pub image_url: Option<String>
+    pub image_url: Option<String>,
 }
 
 impl Artist {

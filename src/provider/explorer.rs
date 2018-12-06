@@ -1,16 +1,16 @@
+use super::{NavigationError, ProviderFolder, SharedProviders};
 use failure::Error;
-use super::{SharedProviders, ProviderFolder, NavigationError};
 
 pub struct Explorer {
     pub path: Vec<String>,
-    providers: SharedProviders
+    providers: SharedProviders,
 }
 
 impl Explorer {
     pub fn new(providers: SharedProviders) -> Explorer {
         Explorer {
             path: vec![],
-            providers
+            providers,
         }
     }
 
@@ -23,7 +23,7 @@ impl Explorer {
                     let layer = &current[..index];
                     current = &current[index + 1..];
                     layer
-                },
+                }
                 None => {
                     let copy = current;
                     current = "";
@@ -44,22 +44,21 @@ impl Explorer {
     }
 
     pub fn path(&self) -> String {
-        self.path
-            .iter()
-            .fold(String::new(), |mut a, b| {
-                a.push_str(format!("{}/", b).as_str());
-                a
-            })
+        self.path.iter().fold(String::new(), |mut a, b| {
+            a.push_str(format!("{}/", b).as_str());
+            a
+        })
     }
 
     fn get_root(&self) -> ProviderFolder {
-        let folders = self.providers
+        let folders = self
+            .providers
             .iter()
             .map(|provider| provider.read().unwrap().title().to_owned())
             .collect();
         ProviderFolder {
             folders,
-            items: vec![]
+            items: vec![],
         }
     }
 
@@ -69,16 +68,18 @@ impl Explorer {
             0 => Ok(root),
             1 => {
                 let path = &self.path[0];
-                let provider = self.providers
+                let provider = self
+                    .providers
                     .iter()
                     .find(|provider| provider.read().unwrap().title() == path);
                 provider
                     .ok_or_else(|| Error::from(NavigationError::PathNotFound))
                     .map(|provider| provider.read().unwrap().root())
-            },
+            }
             _ => {
                 let path = &self.path[0];
-                let provider = self.providers
+                let provider = self
+                    .providers
                     .iter()
                     .find(|provider| provider.read().unwrap().title() == path);
                 let path = &self.path[1..];

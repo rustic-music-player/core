@@ -1,10 +1,13 @@
 use failure::Error;
-use Rustic;
-use std::sync::{Arc, Mutex, Condvar};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use std::time::Duration;
+use Rustic;
 
-pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<thread::JoinHandle<()>, Error> {
+pub fn start(
+    app: Arc<Rustic>,
+    running: Arc<(Mutex<bool>, Condvar)>,
+) -> Result<thread::JoinHandle<()>, Error> {
     thread::Builder::new()
         .name("Background Sync".into())
         .spawn(move || {
@@ -17,14 +20,22 @@ pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<t
                     let mut provider = provider.write().unwrap();
                     info!("Syncing {} library", provider.title());
                     match provider.sync(Arc::clone(&app.library)) {
-                        Ok(result) => info!("Synced {} tracks, {} albums, {} artist and {} playlists from {}", result.tracks, result.albums, result.artists, result.playlists, provider.title()),
-                        Err(err) => error!("Error syncing {}: {:?}", provider.title(), err)
+                        Ok(result) => info!(
+                            "Synced {} tracks, {} albums, {} artist and {} playlists from {}",
+                            result.tracks,
+                            result.albums,
+                            result.artists,
+                            result.playlists,
+                            provider.title()
+                        ),
+                        Err(err) => error!("Error syncing {}: {:?}", provider.title(), err),
                     }
                 }
-                let result = cvar.wait_timeout(keep_running, Duration::from_secs(5 * 60)).unwrap();
+                let result = cvar
+                    .wait_timeout(keep_running, Duration::from_secs(5 * 60))
+                    .unwrap();
                 keep_running = result.0;
             }
             info!("Background Sync stopped");
-        })
-        .map_err(Error::from)
+        }).map_err(Error::from)
 }

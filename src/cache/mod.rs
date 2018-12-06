@@ -1,15 +1,15 @@
-use std::fs::{create_dir_all, OpenOptions};
-use std::sync::{Arc, RwLock, Mutex, Condvar};
-use std::io::prelude::*;
-use std::thread;
-use std::time::Duration;
-use std::collections::HashMap;
-use std::path::Path;
 use failure::Error;
-use md5;
-use reqwest::get;
 use image;
 use image::FilterType;
+use md5;
+use reqwest::get;
+use std::collections::HashMap;
+use std::fs::{create_dir_all, OpenOptions};
+use std::io::prelude::*;
+use std::path::Path;
+use std::sync::{Arc, Condvar, Mutex, RwLock};
+use std::thread;
+use std::time::Duration;
 use Rustic;
 
 const THUMBNAIL_SIZE: u32 = 512;
@@ -18,17 +18,20 @@ const SERVICE_INTERVAL: u64 = 30;
 #[derive(Debug)]
 struct CachedEntry {
     uri: String,
-    filename: String
+    filename: String,
 }
 
 #[derive(Debug, Default)]
 pub struct Cache {
-    pub coverart: Arc<RwLock<HashMap<String, String>>>
+    pub coverart: Arc<RwLock<HashMap<String, String>>>,
 }
 
 pub type SharedCache = Arc<Cache>;
 
-pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<thread::JoinHandle<()>, Error> {
+pub fn start(
+    app: Arc<Rustic>,
+    running: Arc<(Mutex<bool>, Condvar)>,
+) -> Result<thread::JoinHandle<()>, Error> {
     create_dir_all(".cache/coverart")?;
 
     thread::Builder::new()
@@ -39,17 +42,15 @@ pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<t
             let mut keep_running = lock.lock().unwrap();
             while *keep_running {
                 info!("Caching Coverart...");
-                let result: Result<Vec<CachedEntry>, Error> = app.library
-                    .get_tracks()
-                    .and_then(|tracks| {
+                let result: Result<Vec<CachedEntry>, Error> =
+                    app.library.get_tracks().and_then(|tracks| {
                         tracks
                             .iter()
                             .filter(|track| track.image_url.is_some())
                             .filter(|track| {
                                 let map = app.cache.coverart.read().unwrap();
                                 !map.contains_key(&track.uri)
-                            })
-                            .map(|track| track.image_url.clone().unwrap())
+                            }).map(|track| track.image_url.clone().unwrap())
                             .map(cache_coverart)
                             .collect()
                     });
@@ -61,16 +62,17 @@ pub fn start(app: Arc<Rustic>, running: Arc<(Mutex<bool>, Condvar)>) -> Result<t
                         for entry in entries {
                             map.insert(entry.uri, entry.filename);
                         }
-                    },
-                    Err(e) => error!("Error: {:?}", e)
+                    }
+                    Err(e) => error!("Error: {:?}", e),
                 }
 
-                let result = cvar.wait_timeout(keep_running, Duration::new(SERVICE_INTERVAL, 0)).unwrap();
+                let result = cvar
+                    .wait_timeout(keep_running, Duration::new(SERVICE_INTERVAL, 0))
+                    .unwrap();
                 keep_running = result.0;
             }
             info!("Coverart Cache stopped");
-        })
-        .map_err(Error::from)
+        }).map_err(Error::from)
 }
 
 fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
@@ -81,10 +83,7 @@ fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
     let path = format!("{}/{}", base, filename);
     if Path::new(&path).exists() {
         trace!("file already exists");
-        return Ok(CachedEntry {
-            filename,
-            uri
-        });
+        return Ok(CachedEntry { filename, uri });
     }
 
     debug!("{} -> {}", &uri, &filename);
@@ -102,10 +101,7 @@ fn cache_coverart(uri: String) -> Result<CachedEntry, Error> {
     trace!("storing image");
     let mut file = OpenOptions::new().create(true).write(true).open(&path)?;
     thumb.write_to(&mut file, image::ImageFormat::PNG)?;
-    Ok(CachedEntry {
-        filename,
-        uri
-    })
+    Ok(CachedEntry { filename, uri })
 }
 
 impl Cache {
