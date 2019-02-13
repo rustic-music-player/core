@@ -45,12 +45,12 @@ impl Rustic {
         }))
     }
 
-    pub fn resolve_track(&self, uri: &String) -> Result<Option<Track>, failure::Error> {
+    pub fn resolve_track(&self, uri: &str) -> Result<Option<Track>, failure::Error> {
         let track = self
             .library
             .get_tracks()?
             .into_iter()
-            .find(|track| &track.uri == uri);
+            .find(|track| track.uri == uri);
 
         match track {
             Some(track) => Ok(Some(track)),

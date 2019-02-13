@@ -12,16 +12,16 @@ pub struct SearchResults {
 }
 
 pub trait Library: Sync + Send {
-    fn get_track(&self, id: &usize) -> Result<Option<Track>, Error>;
+    fn get_track(&self, id: usize) -> Result<Option<Track>, Error>;
     fn get_tracks(&self) -> Result<Vec<Track>, Error>;
 
-    fn get_album(&self, id: &usize) -> Result<Option<Album>, Error>;
+    fn get_album(&self, id: usize) -> Result<Option<Album>, Error>;
     fn get_albums(&self) -> Result<Vec<Album>, Error>;
 
-    fn get_artist(&self, id: &usize) -> Result<Option<Artist>, Error>;
+    fn get_artist(&self, id: usize) -> Result<Option<Artist>, Error>;
     fn get_artists(&self) -> Result<Vec<Artist>, Error>;
 
-    fn get_playlist(&self, id: &usize) -> Result<Option<Playlist>, Error>;
+    fn get_playlist(&self, id: usize) -> Result<Option<Playlist>, Error>;
     fn get_playlists(&self) -> Result<Vec<Playlist>, Error>;
 
     fn add_track(&self, track: &mut Track) -> Result<(), Error>;
