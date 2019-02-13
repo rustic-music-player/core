@@ -6,8 +6,6 @@ extern crate serde_derive;
 extern crate url;
 #[macro_use]
 extern crate failure;
-#[macro_use]
-extern crate failure_derive;
 extern crate crossbeam_channel as channel;
 extern crate image;
 extern crate md5;
