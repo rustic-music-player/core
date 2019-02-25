@@ -13,7 +13,6 @@ pub struct Track {
     pub artist: Option<Artist>,
     pub album_id: Option<usize>,
     pub album: Option<Album>,
-    pub stream_url: String,
     pub provider: Provider,
     pub uri: String,
     pub image_url: Option<String>,

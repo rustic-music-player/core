@@ -23,7 +23,7 @@ pub struct SyncResult {
     pub playlists: usize,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum Provider {
     Pocketcasts,
@@ -38,11 +38,13 @@ pub trait ProviderInstance: Debug {
     fn setup(&mut self) -> Result<(), Error>;
     fn title(&self) -> &'static str;
     fn uri_scheme(&self) -> &'static str;
+    fn provider(&self) -> Provider;
     fn sync(&mut self, library: SharedLibrary) -> Result<SyncResult, Error>;
     fn root(&self) -> ProviderFolder;
     fn navigate(&self, path: Vec<String>) -> Result<ProviderFolder, Error>;
     fn search(&self, query: String) -> Result<Vec<ProviderItem>, Error>;
     fn resolve_track(&self, uri: &str) -> Result<Option<Track>, Error>;
+    fn stream_url(&self, track: &Track) -> Result<String, Error>;
 }
 
 #[derive(Debug, Fail)]
