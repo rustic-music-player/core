@@ -21,28 +21,54 @@ pub use library::{Album, Artist, Library, Playlist, SearchResults, SharedLibrary
 pub use player::{PlayerBackend, PlayerEvent, PlayerState};
 pub use provider::{Explorer, Provider};
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
 
 pub struct Rustic {
-    pub player: Arc<Box<PlayerBackend>>,
+    player: Arc<Mutex<HashMap<String, Arc<Box<PlayerBackend>>>>>,
     pub library: library::SharedLibrary,
     pub providers: provider::SharedProviders,
     pub cache: cache::SharedCache,
+    default_player: Arc<Mutex<Option<String>>>,
 }
 
 impl Rustic {
     pub fn new(
         library: Box<Library>,
         providers: provider::SharedProviders,
-        player: Arc<Box<PlayerBackend>>,
     ) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
         Ok(Arc::new(Rustic {
-            player,
+            player: Arc::new(Mutex::new(HashMap::new())),
             library,
             providers,
             cache: Arc::new(cache::Cache::new()),
+            default_player: Arc::new(Mutex::new(None))
         }))
+    }
+
+    pub fn add_player(&self, id: String, backend: Arc<Box<PlayerBackend>>) {
+        let mut player = self.player.lock().unwrap();
+        player.insert(id, backend);
+    }
+
+    pub fn get_player(&self, id: String) -> Option<Arc<Box<PlayerBackend>>> {
+        let player = self.player.lock().unwrap();
+        player.get(&id).map(Arc::clone)
+    }
+
+    pub fn get_default_player(&self) -> Option<Arc<Box<PlayerBackend>>> {
+        let default_player = self.default_player.lock().unwrap();
+        default_player.clone().and_then(|id| {
+            let player = self.player.lock().unwrap();
+
+            player.get(&id).map(Arc::clone)
+        })
+    }
+
+    pub fn set_default_player(&self, id: String) {
+        let mut default_player = self.default_player.lock().unwrap();
+        *default_player = Some(id);
     }
 
     pub fn resolve_track(&self, uri: &str) -> Result<Option<Track>, failure::Error> {
