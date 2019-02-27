@@ -1,7 +1,8 @@
-use library::{Album, Artist};
+use library::{Album, Artist, MetaValue};
 use provider::Provider;
 use std::cmp::Ordering;
 use std::sync::Arc;
+use std::collections::HashMap;
 use Rustic;
 
 #[derive(Clone, Debug, Serialize)]
@@ -12,11 +13,11 @@ pub struct Track {
     pub artist: Option<Artist>,
     pub album_id: Option<usize>,
     pub album: Option<Album>,
-    pub stream_url: String,
     pub provider: Provider,
     pub uri: String,
     pub image_url: Option<String>,
     pub duration: Option<u64>,
+    pub meta: HashMap<&'static str, MetaValue>
 }
 
 impl Track {

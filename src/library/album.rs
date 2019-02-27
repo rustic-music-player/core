@@ -1,6 +1,7 @@
-use library::Artist;
+use library::{Artist, MetaValue};
 use provider::Provider;
 use std::sync::Arc;
+use std::collections::HashMap;
 use Rustic;
 
 #[derive(Clone, Debug, Serialize)]
@@ -12,6 +13,7 @@ pub struct Album {
     pub provider: Provider,
     pub image_url: Option<String>,
     pub uri: String,
+    pub meta: HashMap<&'static str, MetaValue>
 }
 
 impl Album {

@@ -68,4 +68,11 @@ impl Rustic {
             }
         }
     }
+
+    pub fn stream_url(&self, track: &Track) -> Result<String, failure::Error> {
+        self.providers.iter()
+            .find(|provider| provider.read().unwrap().provider() == track.provider)
+            .ok_or_else(|| format_err!("provider for track {:?} not found", track))
+            .and_then(|provider| provider.read().unwrap().stream_url(track))
+    }
 }
