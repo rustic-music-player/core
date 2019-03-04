@@ -1,9 +1,9 @@
 pub mod event;
 pub mod state;
 
-use channel::Receiver;
+use crate::channel::Receiver;
 use failure::Error;
-use library::Track;
+use crate::library::Track;
 use std::any::Any;
 use std::time::Duration;
 
@@ -59,5 +59,5 @@ pub trait PlayerBackend: Send + Sync {
 
     fn observe(&self) -> Receiver<PlayerEvent>;
 
-    fn as_any(&self) -> &Any;
+    fn as_any(&self) -> &dyn Any;
 }

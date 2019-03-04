@@ -1,5 +1,5 @@
 use super::state::PlayerState;
-use library::Track;
+use crate::library::Track;
 use std::time::Duration;
 
 #[derive(Debug)]

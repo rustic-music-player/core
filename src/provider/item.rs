@@ -1,4 +1,4 @@
-use library::{Album, Artist, Playlist, Track};
+use crate::library::{Album, Artist, Playlist, Track};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct ProviderItem {

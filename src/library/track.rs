@@ -1,9 +1,9 @@
-use library::{Album, Artist, MetaValue};
-use provider::Provider;
+use crate::library::{Album, Artist, MetaValue};
+use crate::provider::Provider;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use std::collections::HashMap;
-use Rustic;
+use crate::Rustic;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Track {

@@ -1,4 +1,4 @@
-use provider::item::ProviderItem;
+use crate::provider::item::ProviderItem;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ProviderFolder {

@@ -14,7 +14,7 @@ impl<T> From<sync::PoisonError<T>> for SyncError {
 }
 
 impl fmt::Display for SyncError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             SyncError::ConfigurationError => write!(f, "Configuration Error"),
             SyncError::LibraryAccessError => write!(f, "Library Access Error"),

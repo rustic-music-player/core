@@ -1,8 +1,8 @@
-use library::{Artist, MetaValue};
-use provider::Provider;
+use crate::library::{Artist, MetaValue};
+use crate::provider::Provider;
 use std::sync::Arc;
 use std::collections::HashMap;
-use Rustic;
+use crate::Rustic;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Album {

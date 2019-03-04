@@ -1,5 +1,5 @@
-use library::Track;
-use provider::Provider;
+use crate::library::Track;
+use crate::provider::Provider;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone, Serialize)]

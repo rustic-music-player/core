@@ -10,11 +10,11 @@ pub use self::folder::ProviderFolder;
 pub use self::item::{ProviderItem, ProviderItemType};
 pub use self::sync_error::SyncError;
 
-use library::{SharedLibrary, Track};
+use crate::library::{SharedLibrary, Track};
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
 
-pub type SharedProviders = Vec<Arc<RwLock<Box<ProviderInstance + Send + Sync>>>>;
+pub type SharedProviders = Vec<Arc<RwLock<Box<dyn ProviderInstance + Send + Sync>>>>;
 
 pub struct SyncResult {
     pub tracks: usize,

@@ -2,6 +2,7 @@
 name = "rustic-core"
 version = "0.1.0"
 authors = ["Max Jööhnk <maxjoehnk@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 log = "0.4"

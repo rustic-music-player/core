@@ -2,7 +2,7 @@ use failure::Error;
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use std::time::Duration;
-use Rustic;
+use crate::Rustic;
 
 pub fn start(
     app: Arc<Rustic>,

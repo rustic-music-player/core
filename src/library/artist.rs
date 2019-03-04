@@ -1,7 +1,7 @@
-use library::MetaValue;
+use crate::library::MetaValue;
 use std::sync::Arc;
 use std::collections::HashMap;
-use Rustic;
+use crate::Rustic;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Artist {

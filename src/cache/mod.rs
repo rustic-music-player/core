@@ -10,7 +10,7 @@ use std::path::Path;
 use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread;
 use std::time::Duration;
-use Rustic;
+use crate::Rustic;
 
 const THUMBNAIL_SIZE: u32 = 512;
 const SERVICE_INTERVAL: u64 = 30;

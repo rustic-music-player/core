@@ -1,8 +1,8 @@
 use failure::Error;
-use library::{Album, Artist, Playlist, Track};
+use crate::library::{Album, Artist, Playlist, Track};
 use std::sync::Arc;
 
-pub type SharedLibrary = Arc<Box<Library>>;
+pub type SharedLibrary = Arc<Box<dyn Library>>;
 
 pub struct SearchResults {
     pub tracks: Vec<Track>,

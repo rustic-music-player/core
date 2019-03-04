@@ -1,15 +1,19 @@
 #[macro_use]
+extern crate failure;
+#[macro_use]
 extern crate log;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate url;
-#[macro_use]
-extern crate failure;
-extern crate crossbeam_channel as channel;
-extern crate image;
-extern crate md5;
-extern crate reqwest;
+
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
+use crossbeam_channel as channel;
+use url::Url;
+
+pub use crate::library::{Album, Artist, Library, Playlist, SearchResults, SharedLibrary, Track};
+pub use crate::player::{PlayerBackend, PlayerEvent, PlayerState};
+pub use crate::provider::{Explorer, Provider};
 
 pub mod cache;
 pub mod library;
@@ -17,15 +21,8 @@ pub mod player;
 pub mod provider;
 pub mod sync;
 
-pub use library::{Album, Artist, Library, Playlist, SearchResults, SharedLibrary, Track};
-pub use player::{PlayerBackend, PlayerEvent, PlayerState};
-pub use provider::{Explorer, Provider};
-
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
-
 pub struct Rustic {
-    player: Arc<Mutex<HashMap<String, Arc<Box<PlayerBackend>>>>>,
+    player: Arc<Mutex<HashMap<String, Arc<Box<dyn PlayerBackend>>>>>,
     pub library: library::SharedLibrary,
     pub providers: provider::SharedProviders,
     pub cache: cache::SharedCache,
@@ -34,7 +31,7 @@ pub struct Rustic {
 
 impl Rustic {
     pub fn new(
-        library: Box<Library>,
+        library: Box<dyn Library>,
         providers: provider::SharedProviders,
     ) -> Result<Arc<Rustic>, failure::Error> {
         let library = Arc::new(library);
@@ -43,21 +40,21 @@ impl Rustic {
             library,
             providers,
             cache: Arc::new(cache::Cache::new()),
-            default_player: Arc::new(Mutex::new(None))
+            default_player: Arc::new(Mutex::new(None)),
         }))
     }
 
-    pub fn add_player(&self, id: String, backend: Arc<Box<PlayerBackend>>) {
+    pub fn add_player(&self, id: String, backend: Arc<Box<dyn PlayerBackend>>) {
         let mut player = self.player.lock().unwrap();
         player.insert(id, backend);
     }
 
-    pub fn get_player(&self, id: String) -> Option<Arc<Box<PlayerBackend>>> {
+    pub fn get_player(&self, id: String) -> Option<Arc<Box<dyn PlayerBackend>>> {
         let player = self.player.lock().unwrap();
         player.get(&id).map(Arc::clone)
     }
 
-    pub fn get_default_player(&self) -> Option<Arc<Box<PlayerBackend>>> {
+    pub fn get_default_player(&self) -> Option<Arc<Box<dyn PlayerBackend>>> {
         let default_player = self.default_player.lock().unwrap();
         default_player.clone().and_then(|id| {
             let player = self.player.lock().unwrap();
@@ -81,7 +78,7 @@ impl Rustic {
         match track {
             Some(track) => Ok(Some(track)),
             None => {
-                let url = url::Url::parse(uri)?;
+                let url = Url::parse(uri)?;
                 let provider = self
                     .providers
                     .iter()
