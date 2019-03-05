@@ -1,3 +1,4 @@
+use serde_derive::Serialize;
 use crate::provider::item::ProviderItem;
 
 #[derive(Debug, Clone, Serialize)]

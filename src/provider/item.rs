@@ -1,3 +1,4 @@
+use serde_derive::Serialize;
 use crate::library::{Album, Artist, Playlist, Track};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

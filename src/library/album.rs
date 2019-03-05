@@ -1,3 +1,4 @@
+use serde_derive::Serialize;
 use crate::library::{Artist, MetaValue};
 use crate::provider::Provider;
 use std::sync::Arc;

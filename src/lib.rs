@@ -1,10 +1,4 @@
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_derive;
-
+use failure::format_err;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 

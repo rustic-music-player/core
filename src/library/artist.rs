@@ -1,3 +1,4 @@
+use serde_derive::Serialize;
 use crate::library::MetaValue;
 use std::sync::Arc;
 use std::collections::HashMap;

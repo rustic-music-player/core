@@ -1,3 +1,4 @@
+use serde_derive::{Serialize, Deserialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum MetaValue {
     Bool(bool),

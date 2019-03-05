@@ -1,3 +1,4 @@
+use serde_derive::Serialize;
 use crate::library::Track;
 use crate::provider::Provider;
 use std::cmp::Ordering;

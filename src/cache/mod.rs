@@ -1,3 +1,4 @@
+use log::{info, error, trace, debug};
 use failure::Error;
 use image;
 use image::FilterType;
